@@ -17,6 +17,16 @@ The goal of **iProFun** is to
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+load("rna_normal.Rdata")
+load("phospho_normal.Rdata")
+load("protein_normal.Rdata")
+load("methy.Rdata")
+load("cnv.Rdata")
+load("rna_pc_1_3.Rdata")
+load("protein_pc_1_3.Rdata")
+load("phospho_pc_1_3.Rdata")
+load("cnv_input_1_3.RData")
+load("methy_input_1_3.RData")
 ```
 
 ### Installation
@@ -33,7 +43,7 @@ You can install:
 
     ```R
     install.packages("devtools")
-    devtools::install_github("sfirke/iProFun")
+    devtools::install_github("xiaoyu/iProFun")
     ````
     
     
@@ -41,7 +51,49 @@ You can install:
 
 Below is examples of how iProFun is commonly used.  A full description of the tool can be found in our MCP paper,
 
+### Data summary
+
+After preprossing and data cleaning, we have 15121 genes and 569 subjects for mRNA data, 7010 genes and 174 subjects for protein, 5685 genes and 70 subjects for phospho data, 25762 genes and 552 subjects for methylation data, 11859 genes and 560 subjects for mRNA data. The following shows the data structure for each data.
+
+```{r}
+rna_normal[1:5,1:5]
+protein_normal[1:5,1:5]
+phospho_normal[1:5, 1:5]
+methy[1:5,1:5]
+cnv[1:5, 1:5]
+```
+
 ### Gene-level multiple linear regression to obtain summary statistics
+
+```{r, eval=FALSE}
+
+ylist_normal = list(rna_normal, protein_normal, phospho_normal)
+methy_input_1_3 <-
+MultiReg_together(
+ylist = ylist_normal,
+xlist = list(methy, cnv),
+covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
+cl = cl
+)
+cnv_input_1_3 <-
+MultiReg_together(
+ylist = ylist_normal,
+xlist = list(cnv, methy),
+covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
+cl = cl
+)
+
+```
+
+
+
+
+
+```{r}
+str(cnv_input_1_3)
+str(methy_input_1_3)
+```
+
 
 ### Primo – An integrative analysis method for detecting joint associations of DNA al- terations with multi-omics traits
 
