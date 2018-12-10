@@ -16,12 +16,10 @@ The goal of **iProFun** is to
 
 You can install:
 
--   the most recent officially-released version from CRAN with
-
-    ``` r
-    install.packages("iProFun")
-    ```
-
+<!-- * the most recent officially-released version from CRAN with -->
+<!--     ```R -->
+<!--     install.packages("iProFun") -->
+<!--     ```` -->
 -   the latest development version from GitHub with
 
     ``` r
@@ -32,7 +30,34 @@ You can install:
 iProFun Integrative analysis pipeline
 -------------------------------------
 
-Below is an example of how iProFun is commonly used. A full description of the tool can be found in our MCP paper,
+Below is an example of how iProFun is commonly used. A full description of the tool can be found in our MCP paper.
+
+``` r
+library(iProFun)
+require(metRology)
+```
+
+    ## Loading required package: metRology
+
+    ## 
+    ## Attaching package: 'metRology'
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     cbind, rbind
+
+``` r
+require(matrixStats)
+```
+
+    ## Loading required package: matrixStats
+
+    ## 
+    ## Attaching package: 'matrixStats'
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     count
 
 ### Data summary
 
