@@ -34,7 +34,12 @@ load("Rdata/methy_input_1_3.RData")
 
 ### Installation
 
-You can install:
+You can install the latest development version from GitHub with
+
+```R
+install.packages("devtools")
+devtools::install_github("xiaoyu/iProFun")
+````
 
 <!-- * the most recent officially-released version from CRAN with -->
 
@@ -42,22 +47,24 @@ You can install:
 <!--     install.packages("iProFun") -->
 <!--     ```` -->
 
-* the latest development version from GitHub with
+<!-- * the latest development version from GitHub with -->
 
-    ```R
-    install.packages("devtools")
-    devtools::install_github("xiaoyu/iProFun")
-    ````
+<!--     ```R -->
+<!--     install.packages("devtools") -->
+<!--     devtools::install_github("xiaoyu/iProFun") -->
+<!--     ```` -->
     
     
 ## iProFun Integrative analysis pipeline
 
 Below is an example of how iProFun is commonly used.  A full description of the tool can be found in our MCP paper.
-
-```{r}
-library(iProFun)
+```{r, include = FALSE}
 require(metRology)
 require(matrixStats)
+```
+
+```{r, messages = FALSE, warning = FALSE,}
+library(iProFun)
 ```
 
 
@@ -67,11 +74,15 @@ After preprossing and data cleaning, we have 15121 genes and 569 subjects for mR
 
 ```{r}
 rna_normal[1:5,1:5]
-protein_normal[1:5,1:5]
-phospho_normal[1:5, 1:5]
-methy[1:5,1:5]
-cnv[1:5, 1:5]
 ```
+
+```{r, include = FALSE}
+# protein_normal[1:5,1:5]
+# phospho_normal[1:5, 1:5]
+# methy[1:5,1:5]
+# cnv[1:5, 1:5]
+```
+
 
 ### Gene-level multiple linear regression to obtain summary statistics
 
@@ -84,23 +95,10 @@ xlist = list(methy, cnv),
 covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
 cl = cl
 )
-cnv_input_1_3 <-
-MultiReg_together(
-ylist = ylist_normal,
-xlist = list(cnv, methy),
-covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
-cl = cl
-)
-
 ```
-
-
-
-
 
 ```{r}
 str(cnv_input_1_3)
-str(methy_input_1_3)
 ```
 
 
@@ -109,12 +107,10 @@ str(methy_input_1_3)
 ```{r, results=FALSE}
 pi1=rep(0.05, 3)
 cnv_1_3 = MultiOmics_Input(cnv_input_1_3, pi1=pi1)
-methy_1_3 = MultiOmics_Input(methy_input_1_3, pi1=pi1)
 ```
 
 ```{r}
 str(cnv_1_3)
-str(methy_1_3)
 ```
 
 
