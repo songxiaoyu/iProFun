@@ -1,8 +1,8 @@
 Package: iProFun
-Title: What the Package Does (one line, title case)
-Version: 0.0.0.9000
+Title: An integrative analysis tool to screen for Proteogenomic Functional traits perturbed by DNA copy number alterations (CNA) and DNA methylation
+Version: 0.0.1
 Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Description: The goal of iProFun is to 1) characterize functional consequences of DNA copy number and methylation alterations in tumors 2)facilitate screening for cancer drivers contributing to tumor initiation and progression, since CNAs and DNA methylations that preserve functional consequences are more likely to be cancer drivers.
 Depends: R (>= 3.5.0)
 License: What license is it under?
 Encoding: UTF-8
