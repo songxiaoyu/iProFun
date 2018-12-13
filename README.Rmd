@@ -86,6 +86,8 @@ rna_normal[1:5,1:5]
 
 ### Gene-level multiple linear regression to obtain summary statistics
 
+We use sets of separate regressions in the integrative analysis pipeline to allow for different samples being measured on different sets of molecular features.
+
 ```{r, eval=FALSE}
 ylist_normal = list(rna_normal, protein_normal, phospho_normal)
 methy_input_1_3 <-
@@ -97,12 +99,16 @@ cl = cl
 )
 ```
 
+The following shows the results for CNA.
+
 ```{r}
 str(cnv_input_1_3)
 ```
 
 
 ### Primo – An integrative analysis method for detecting joint associations of DNA al- terations with multi-omics traits
+
+With the summary association statistics obtained from equations (1), we apply an integrative analysis method – Primo – to detect joint associations of DNA variation with multi-omics traits
 
 ```{r, results=FALSE}
 pi1=rep(0.05, 3)
