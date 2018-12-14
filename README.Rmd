@@ -121,3 +121,23 @@ str(cnv_1_3)
 
 
 ### False discovery rate assessment
+
+To calculate the empirical FDR, we first calculated the posterior probability of a predictor being associated with an outcome, by summing over all patterns that are consistent with the association of interest.
+
+The following shows the results when we randomly permute the sample label of the mRNA while keeping the labels of the other two traits.
+
+```{r, eval=FALSE}
+ MultiReg_cnv_lr_perm_1 = MultiReg_together_perm(
+    ylist = list(rna_regression, protein_regression, phospho_regression),
+    xlist = list(cnv_lr_regression, cnv_baf_regression, methy_mean_regression),
+    covariates = list(purity_tumor,age, gender),
+    xyCommonGeneID = xy_common_geneID,
+    conditional_covariate = mutation_reg_111,
+    mutation_genes = mutation_gene_111,
+    xyCommonSubID = list(xrnaCommonSubID, xproteinCommonSubID, xphosphoCommonSubID),
+    filename = "MultiReg_cnv_lr_together_perm_1",
+    permcolum = 1,
+    seed=(currind-1)*10+i
+  )
+```
+

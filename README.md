@@ -56,6 +56,8 @@ rna_normal[1:5,1:5]
 
 ### Gene-level multiple linear regression to obtain summary statistics
 
+We use sets of separate regressions in the integrative analysis pipeline to allow for different samples being measured on different sets of molecular features.
+
 ``` r
 ylist_normal = list(rna_normal, protein_normal, phospho_normal)
 methy_input_1_3 <-
@@ -66,6 +68,8 @@ covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
 cl = cl
 )
 ```
+
+The following shows the results for CNA.
 
 ``` r
 str(cnv_input_1_3)
@@ -83,6 +87,8 @@ str(cnv_input_1_3)
     ##  $ yName     : chr [1:676, 1] "AAAS.NP_001166937.1:s462" "ABCC1.NP_004987.2:s930" "ABI1.NP_001012768.1:s222" "ABI2.NP_001269854.1:s183" ...
 
 ### Primo – An integrative analysis method for detecting joint associations of DNA al- terations with multi-omics traits
+
+With the summary association statistics obtained from equations (1), we apply an integrative analysis method – Primo – to detect joint associations of DNA variation with multi-omics traits
 
 ``` r
 pi1=rep(0.05, 3)
@@ -118,3 +124,22 @@ str(cnv_1_3)
     ##  $ D1           : num [1:676, 1:3] 0.0153 0.0191 0.0162 0.0127 0.016 ...
 
 ### False discovery rate assessment
+
+To calculate the empirical FDR, we first calculated the posterior probability of a predictor being associated with an outcome, by summing over all patterns that are consistent with the association of interest.
+
+The following shows the results when we randomly permute the sample label of the mRNA while keeping the labels of the other two traits.
+
+``` r
+ MultiReg_cnv_lr_perm_1 = MultiReg_together_perm(
+    ylist = list(rna_regression, protein_regression, phospho_regression),
+    xlist = list(cnv_lr_regression, cnv_baf_regression, methy_mean_regression),
+    covariates = list(purity_tumor,age, gender),
+    xyCommonGeneID = xy_common_geneID,
+    conditional_covariate = mutation_reg_111,
+    mutation_genes = mutation_gene_111,
+    xyCommonSubID = list(xrnaCommonSubID, xproteinCommonSubID, xphosphoCommonSubID),
+    filename = "MultiReg_cnv_lr_together_perm_1",
+    permcolum = 1,
+    seed=(currind-1)*10+i
+  )
+```
