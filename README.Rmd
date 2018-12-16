@@ -113,6 +113,10 @@ With the summary association statistics obtained from equations (1), we apply an
 ```{r, results=FALSE}
 pi1=rep(0.05, 3)
 cnv_1_3 = MultiOmics_Input(cnv_input_1_3, pi1=pi1)
+cnv_1_3_tidy <- MultiOmics_Input(cnv_result , pi1=pi1)
+
+cnv_1_3$colocProb *100
+cnv_1_3_tidy$colocProb*100
 ```
 
 ```{r}
