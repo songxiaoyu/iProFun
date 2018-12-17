@@ -6,7 +6,7 @@
 #' @param pi prior probability
 #' @param permutate whether to permuate or not. 1 = permuatte the first column(mRNA), 2 = permutate the second column, 3 = permutate the third column
 #'
-#' @return A list with 2 lists: The first sublist is the result for CNA, the second sublist is the result for Methylation
+#' @return A list with 2 lists: The first sublist is the marginal probabilities for each group, the second sublist is the posterior probability for each gene
 #' @export iProFun
 #' @importFrom magrittr "%>%"
 #' @import tidyr
@@ -16,7 +16,7 @@
 #' @import metRology
 #' @import matrixStats
 #' @examples
-iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi, permutate = 0){
+iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate = 0){
   rna_regression <- ylist[[1]]
   protein_regression <- ylist[[1]]
   phospho_regression <- ylist[[3]]
@@ -177,13 +177,14 @@ if (permutate == 1){
     unnest() %>%
     drop_na() %>%
     group_by(Gene_ID) %>%
-    top_n(-1, `Pr(>F)`) %>%
+    # top_n(-1, `Pr(>F)`) %>%
+    filter(rank(`Pr(>F)`, ties.method="first") == 1) %>%
     ungroup
 
   phospho_model_final <- phospho_regression_model %>%
     dplyr::select(-model_small, -data) %>%
-    inner_join(phospho_model_smallest_p) %>%
-    filter(phospho_ID != "CALD1.NP_149129.2:s783")
+    inner_join(phospho_model_smallest_p)
+    # filter(phospho_ID != "CALD1.NP_149129.2:s783")
 
   phospho_regression_tidy <- phospho_model_final %>%
     mutate(model_info = map(model_full, broom::tidy)) %>%
@@ -380,6 +381,46 @@ if (permutate == 1){
 # Primo ------------------------------------------------------------------
   cnv_iprofun <- MultiOmics_Input(cnv_result,pi1 = pi)
   methy_iprofun <- MultiOmics_Input(methy_result,pi1 = pi)
-  iprofun_result <- list(cnv_iprofun, methy_iprofun)
+  iprofun_result <- list("Marginal Probability" = tibble(group =
+                                                           c(
+                                                             "None",
+                                                             "RNA only",
+                                                             "Protein only",
+                                                             "Phosphosite only",
+                                                             "RNA & Protein",
+                                                             "RNA & Phospho",
+                                                             "Protein & Phospho",
+                                                             "All three"
+                                                           ), "CNA" = cnv_iprofun$colocProb,"Methy" = methy_iprofun$colocProb),
+                         "Gene Posterior Probability" = methy_iprofun$PostProb %>%
+                           as.tibble() %>%
+                           mutate(X = "Methylation") %>%
+                           select(X, everything()) %>%
+                           rename("None" = `1` ,
+                                  "RNA only" = `2`,
+                                  "Protein only" = `3` ,
+                                  "Phosphosite only" = `4` ,
+                                  "RNA & Protein" = `5` ,
+                                  "RNA & Phospho" = `6`,
+                                  "Protein & Phospho" = `7`,
+                                  "All three" = `8`) %>%
+                           bind_rows(cnv_iprofun$PostProb %>%
+                                       as.tibble() %>%
+                                       mutate(X = "CNA") %>%
+                                       rename("None" = `1` ,
+                                              "RNA only" = `2`,
+                                              "Protein only" = `3` ,
+                                              "Phosphosite only" = `4` ,
+                                              "RNA & Protein" = `5` ,
+                                              "RNA & Phospho" = `6`,
+                                              "Protein & Phospho" = `7`,
+                                              "All three" = `8`) %>%
+                                       dplyr::select(-phospho_ID) %>%
+                                       mutate(Hybridization = NA) ),
+                         "Beta" = cbind(cnv_result$xName, cnv_result$betas_J) %>% as.tibble() %>% dplyr::select(-phospho_ID) %>%
+                           mutate(Hybridization = NA, X = "CNA") %>% bind_rows(
+                             cbind(methy_result$xName, methy_result$betas_J) %>% as.tibble() %>%
+                               mutate(X = "Methylation")
+                           ))
   return(iprofun_result)
 }

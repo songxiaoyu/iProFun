@@ -5,8 +5,8 @@
 \title{iProFun Integrative analysis pipeline}
 \usage{
 iProFun(ylist = list(rna, protein, phospho), xlist = list(cna, methy),
-  covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi,
-  permutate = 0)
+  covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
+  pi = rep(0.05, 3), permutate = 0)
 }
 \arguments{
 \item{ylist}{mRNA, global protein and phosphoprotein}
@@ -20,7 +20,7 @@ iProFun(ylist = list(rna, protein, phospho), xlist = list(cna, methy),
 \item{permutate}{whether to permuate or not. 1 = permuatte the first column(mRNA), 2 = permutate the second column, 3 = permutate the third column}
 }
 \value{
-A list with 2 lists: The first sublist is the result for CNA, the second sublist is the result for Methylation
+A list with 2 lists: The first sublist is the marginal probabilities for each group, the second sublist is the posterior probability for each gene
 }
 \description{
 iProFun Integrative analysis pipeline
