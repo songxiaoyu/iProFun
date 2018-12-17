@@ -4,7 +4,9 @@
 \alias{iProFun}
 \title{iProFun Integrative analysis pipeline}
 \usage{
-iProFun(ylist, xlist, covariates, pi, permutate = 0)
+iProFun(ylist = list(rna, protein, phospho), xlist = list(cnv, methy),
+  covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi,
+  permutate = 0)
 }
 \arguments{
 \item{ylist}{mRNA, global protein and phosphoprotein}
