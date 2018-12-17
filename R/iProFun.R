@@ -6,11 +6,17 @@
 #' @param pi prior probability
 #' @param permutate whether to permuate or not. 1 = permuatte the first column(mRNA), 2 = permutate the second column, 3 = permutate the third column
 #'
-#' @return
+#' @return A list with 2 lists: The first sublist is the result for CNA, the second sublist is the result for Methylation
 #' @export iProFun
-#'
+#' @importFrom magrittr "%>%"
+#' @import tidyr
+#' @importFrom tibble as.tibble
+#' @import dplyr
+#' @import purrr
+#' @import metRology
+#' @import matrixStats
 #' @examples
-iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cnv, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi, permutate = 0){
+iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi, permutate = 0){
   rna_regression <- ylist[[1]]
   protein_regression <- ylist[[1]]
   phospho_regression <- ylist[[3]]
@@ -41,21 +47,6 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cnv, methy
     mutate(methy = paste0("methy", methy)) %>%
     spread(methy, value, fill = 0)
 
-  protein_pc_1_3 <- protein_pc_1_3 %>%
-    mutate(PC = c("protein_pc1", "protein_pc2", "protein_pc3")) %>%
-    gather(subject_id, pc,-PC) %>% as.tibble %>%
-    spread(PC, pc)
-
-  rna_pc_1_3 <- rna_pc_1_3 %>%
-    mutate(PC = c("rna_pc1", "rna_pc2", "rna_pc3")) %>%
-    gather(subject_id, pc,-PC) %>% as.tibble %>%
-    spread(PC, pc)
-
-  phospho_pc_1_3 <- phospho_pc_1_3 %>%
-    mutate(PC = c("phospho_pc1", "phospho_pc2", "phospho_pc3")) %>%
-    gather(subject_id, pc,-PC) %>% as.tibble %>%
-    spread(PC, pc)
-
   rna_name_permutate <- sample(names(rna_regression)[-1])
   rna_regression_permutated <- rna_regression
   names(rna_regression_permutated)[-1] <- rna_name_permutate
@@ -72,7 +63,7 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cnv, methy
   phospho_regression_permutated <- phospho_regression
   names(phospho_regression_permutated)[-c(1,2,3)] <- phospho_name_permutate
   phospho_regression_long_permutated <- phospho_regression_permutated %>%
-    gather(subject_id, phospho, - Gene_ID, - index, - peptide)
+    gather(subject_id, phospho, - Gene_ID, - phospho_ID)
 
   # rna ---------------------------------------------------------------------
 if (permutate == 1){
@@ -356,14 +347,6 @@ if (permutate == 1){
            v_protein = (std.error_methy_protein/sigma_protein) ^2,
            v_phospho = (std.error_methy_phospho/sigma_phospho) ^2) %>%
     dplyr::select(Gene_ID, Hybridization,Gene_ID, starts_with("v"))
-
-  cbind(methy_input_1_3$xName, methy_input_1_3$v_g_J) %>%
-    inner_join(methy_v) %>%
-    as.tibble %>%
-    arrange(`1`) %>%
-    mutate(diff = `1`-v_rna) %>%
-    pull(diff) %>% sum
-
 
   methy_statistic <- rna_methy %>%
     dplyr::select(Gene_ID, Hybridization, statistic_methy_rna) %>%

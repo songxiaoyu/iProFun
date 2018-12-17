@@ -4,7 +4,7 @@
 \alias{iProFun}
 \title{iProFun Integrative analysis pipeline}
 \usage{
-iProFun(ylist = list(rna, protein, phospho), xlist = list(cnv, methy),
+iProFun(ylist = list(rna, protein, phospho), xlist = list(cna, methy),
   covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi,
   permutate = 0)
 }
@@ -18,6 +18,9 @@ iProFun(ylist = list(rna, protein, phospho), xlist = list(cnv, methy),
 \item{pi}{prior probability}
 
 \item{permutate}{whether to permuate or not. 1 = permuatte the first column(mRNA), 2 = permutate the second column, 3 = permutate the third column}
+}
+\value{
+A list with 2 lists: The first sublist is the result for CNA, the second sublist is the result for Methylation
 }
 \description{
 iProFun Integrative analysis pipeline
