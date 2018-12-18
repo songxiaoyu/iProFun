@@ -14,6 +14,7 @@
 #' @import dplyr
 #' @import purrr
 #' @import metRology
+#' @importFrom matrixStats rowMins
 #' @examples
 iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate = 0){
   rna_regression <- ylist[[1]]

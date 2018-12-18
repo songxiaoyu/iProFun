@@ -7,7 +7,7 @@
 iprofun_permutate(ylist = list(rna, protein, phospho),
   xlist = list(cna, methy), covariates = list(rna_pc_1_3,
   protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3),
-  permutate_number = 10)
+  permutate_number = 10, fdr = 0.1, posterior = 0.75)
 }
 \arguments{
 \item{ylist}{mRNA, global protein and phosphoprotein}
@@ -19,6 +19,13 @@ iprofun_permutate(ylist = list(rna, protein, phospho),
 \item{pi}{prior probability}
 
 \item{permutate_number}{Number of permutation, default 10}
+
+\item{fdr}{False Discover Rate, default as 0.1}
+
+\item{posterior}{Minimal Posterior Probabilty Cutoff, default as 0.75}
+}
+\value{
+A list with 3 sublists, the first one is the cutoff values for each greoup based on permutation, the second is the results for iProFun
 }
 \description{
 Calculate the empirical FDR using permutation
