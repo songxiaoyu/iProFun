@@ -14,7 +14,6 @@
 #' @import dplyr
 #' @import purrr
 #' @import metRology
-#' @import matrixStats
 #' @examples
 iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate = 0){
   rna_regression <- ylist[[1]]
@@ -39,12 +38,12 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
 
   methy_regression_long <- methy_regression %>%
     as.tibble() %>%
-    select(-"Hybridization", -"chr") %>%
-    group_by(Gene_ID) %>%
-    mutate(methy = row_number()) %>%
+    dplyr::select(-"Hybridization", -"chr") %>%
+    dplyr::group_by(Gene_ID) %>%
+    dplyr::mutate(methy = row_number()) %>%
     gather(subject_id, value, - "Gene_ID",-methy) %>%
-    ungroup() %>%
-    mutate(methy = paste0("methy", methy)) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(methy = paste0("methy", methy)) %>%
     spread(methy, value, fill = 0)
 
   rna_name_permutate <- sample(names(rna_regression)[-1])
@@ -68,14 +67,14 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
   # rna ---------------------------------------------------------------------
 if (permutate == 1){
   rna_regression_combine <- rna_regression_long_permutated %>%
-    inner_join(cnv_regression_long) %>%
-    inner_join(methy_regression_long) %>%
-    inner_join(rna_pc_1_3)
+    inner_join(cnv_regression_long, by = c("Gene_ID", "subject_id")) %>%
+    inner_join(methy_regression_long, by = c("Gene_ID", "subject_id")) %>%
+    inner_join(rna_pc_1_3, by = "subject_id")
 } else {
   rna_regression_combine <- rna_regression_long %>%
-    inner_join(cnv_regression_long) %>%
-    inner_join(methy_regression_long) %>%
-    inner_join(rna_pc_1_3)
+    inner_join(cnv_regression_long, by = c("Gene_ID", "subject_id")) %>%
+    inner_join(methy_regression_long, by = c("Gene_ID", "subject_id")) %>%
+    inner_join(rna_pc_1_3, by = "subject_id")
 }
   rna_regression_model <- rna_regression_combine %>%
     group_by(Gene_ID) %>%
@@ -100,7 +99,7 @@ if (permutate == 1){
     bind_cols(methy_regression %>% arrange(Gene_ID) %>% select(Hybridization))
 
   rna_info <- rna_cnv %>%
-    inner_join(rna_methy)
+    inner_join(rna_methy, by = "Gene_ID")
 
   rna_regression_glance <- rna_regression_model %>%
     mutate(model_info = map(model, broom::glance)) %>%
@@ -111,14 +110,14 @@ if (permutate == 1){
   # protein ---------------------------------------------------------------------
   if (permutate == 2){
     protein_regression_combine <- protein_regression_long_permutated %>%
-      inner_join(cnv_regression_long) %>%
-      inner_join(methy_regression_long) %>%
-      inner_join(protein_pc_1_3)
+      inner_join(cnv_regression_long, by = c("Gene_ID", "subject_id")) %>%
+      inner_join(methy_regression_long, by = c("Gene_ID", "subject_id")) %>%
+      inner_join(protein_pc_1_3, by = "subject_id")
   } else {
     protein_regression_combine <- protein_regression_long %>%
-      inner_join(cnv_regression_long) %>%
-      inner_join(methy_regression_long) %>%
-      inner_join(protein_pc_1_3)
+      inner_join(cnv_regression_long, by = c("Gene_ID", "subject_id")) %>%
+      inner_join(methy_regression_long, by = c("Gene_ID", "subject_id")) %>%
+      inner_join(protein_pc_1_3, by = "subject_id")
   }
 
   protein_regression_model <- protein_regression_combine %>%
@@ -144,7 +143,7 @@ if (permutate == 1){
     bind_cols(methy_regression %>% arrange(Gene_ID) %>% select(Hybridization))
 
   protein_info <- protein_cnv %>%
-    inner_join(protein_methy)
+    inner_join(protein_methy, by = "Gene_ID")
 
   protein_regression_glance <- protein_regression_model %>%
     mutate(model_info = map(model, broom::glance)) %>%
@@ -155,14 +154,14 @@ if (permutate == 1){
   # phospho ---------------------------------------------------------------------
   if (permutate == 3){
     phospho_regression_combine <- phospho_regression_long_permutated %>%
-      inner_join(cnv_regression_long) %>%
-      inner_join(methy_regression_long) %>%
-      inner_join(phospho_pc_1_3)
+      inner_join(cnv_regression_long, by = c("Gene_ID", "subject_id")) %>%
+      inner_join(methy_regression_long, by = c("Gene_ID", "subject_id")) %>%
+      inner_join(phospho_pc_1_3, by = "subject_id")
   } else {
     phospho_regression_combine <- phospho_regression_long %>%
-      inner_join(cnv_regression_long) %>%
-      inner_join(methy_regression_long) %>%
-      inner_join(phospho_pc_1_3)
+      inner_join(cnv_regression_long, by = c("Gene_ID", "subject_id")) %>%
+      inner_join(methy_regression_long, by = c("Gene_ID", "subject_id")) %>%
+      inner_join(phospho_pc_1_3, by = "subject_id")
   }
 
   phospho_regression_model <- phospho_regression_combine %>%
@@ -183,7 +182,7 @@ if (permutate == 1){
 
   phospho_model_final <- phospho_regression_model %>%
     dplyr::select(-model_small, -data) %>%
-    inner_join(phospho_model_smallest_p)
+    inner_join(phospho_model_smallest_p, by = c("Gene_ID", "phospho_ID"))
     # filter(phospho_ID != "CALD1.NP_149129.2:s783")
 
   phospho_regression_tidy <- phospho_model_final %>%
@@ -204,7 +203,7 @@ if (permutate == 1){
     bind_cols(methy_regression %>% arrange(Gene_ID) %>% select(Hybridization))
 
   phospho_info <- phospho_cnv %>%
-    inner_join(phospho_methy)
+    inner_join(phospho_methy, by = c("Gene_ID", "phospho_ID"))
 
   phospho_regression_glance <- phospho_model_final %>%
     mutate(model_info = map(model_full, broom::glance)) %>%
@@ -217,47 +216,47 @@ if (permutate == 1){
   cnv_estimate <- rna_cnv %>%
     dplyr::select(Gene_ID, estimate_cnv_rna) %>%
     inner_join(protein_cnv %>%
-                 dplyr::select(Gene_ID, estimate_cnv_protein)) %>%
+                 dplyr::select(Gene_ID, estimate_cnv_protein), by = "Gene_ID") %>%
     inner_join(phospho_cnv %>%
-                 dplyr::select(phospho_ID, Gene_ID, estimate_cnv_phospho))
+                 dplyr::select(phospho_ID, Gene_ID, estimate_cnv_phospho), by = "Gene_ID")
 
   cnv_std.error <- rna_cnv %>%
     dplyr::select(Gene_ID, std.error_cnv_rna) %>%
     inner_join(protein_cnv %>%
-                 dplyr::select(Gene_ID, std.error_cnv_protein)) %>%
+                 dplyr::select(Gene_ID, std.error_cnv_protein), by = "Gene_ID") %>%
     inner_join(phospho_cnv %>%
-                 dplyr::select(phospho_ID, Gene_ID, std.error_cnv_phospho))
+                 dplyr::select(phospho_ID, Gene_ID, std.error_cnv_phospho), by = "Gene_ID")
 
   cnv_sigma2 <- rna_regression_glance %>%
     dplyr::select(Gene_ID, sigma2_rna = sigma_rna) %>%
     inner_join(protein_regression_glance %>%
-                 dplyr::select(Gene_ID, sigma2_protein = sigma_protein)) %>%
+                 dplyr::select(Gene_ID, sigma2_protein = sigma_protein), by = "Gene_ID") %>%
     inner_join(phospho_regression_glance %>%
-                 dplyr::select(phospho_ID, Gene_ID, sigma2_phospho = sigma_phospho)) %>%
+                 dplyr::select(phospho_ID, Gene_ID, sigma2_phospho = sigma_phospho), by = "Gene_ID") %>%
     mutate_if(is.numeric, ~(.^2))
 
 
   cnv_df.residual <- rna_regression_glance %>%
     dplyr::select(Gene_ID, df.residual_rna) %>%
     inner_join(protein_regression_glance %>%
-                 dplyr::select(Gene_ID, df.residual_protein)) %>%
+                 dplyr::select(Gene_ID, df.residual_protein), by = "Gene_ID") %>%
     inner_join(phospho_regression_glance %>%
-                 dplyr::select(phospho_ID, Gene_ID, df.residual_phospho))
+                 dplyr::select(phospho_ID, Gene_ID, df.residual_phospho), by = "Gene_ID")
 
   cnv_r.squared <- rna_regression_glance %>%
     dplyr::select(Gene_ID, r.squared_rna) %>%
     inner_join(protein_regression_glance %>%
-                 dplyr::select(Gene_ID, r.squared_protein)) %>%
+                 dplyr::select(Gene_ID, r.squared_protein), by = "Gene_ID") %>%
     inner_join(phospho_regression_glance %>%
-                 dplyr::select(phospho_ID, Gene_ID, r.squared_phospho))
+                 dplyr::select(phospho_ID, Gene_ID, r.squared_phospho), by = "Gene_ID")
 
   cnv_v <- cnv_std.error %>%
     inner_join(rna_regression_glance %>%
                  dplyr::select(Gene_ID, sigma_rna) %>%
                  inner_join(protein_regression_glance %>%
-                              dplyr::select(Gene_ID, sigma_protein)) %>%
+                              dplyr::select(Gene_ID, sigma_protein), by = "Gene_ID") %>%
                  inner_join(phospho_regression_glance %>%
-                              dplyr::select(phospho_ID, Gene_ID, sigma_phospho))) %>%
+                              dplyr::select(phospho_ID, Gene_ID, sigma_phospho), by = "Gene_ID"), by = c("Gene_ID", "phospho_ID")) %>%
     mutate(v_rna = (std.error_cnv_rna/sigma_rna) ^2,
            v_protein = (std.error_cnv_protein/sigma_protein) ^2,
            v_phospho = (std.error_cnv_phospho/sigma_phospho) ^2) %>%
@@ -274,18 +273,18 @@ if (permutate == 1){
   cnv_statistic <- rna_cnv %>%
     dplyr::select(Gene_ID, statistic_cnv_rna) %>%
     inner_join(protein_cnv %>%
-                 dplyr::select(Gene_ID, statistic_cnv_protein)) %>%
+                 dplyr::select(Gene_ID, statistic_cnv_protein), by = "Gene_ID") %>%
     inner_join(phospho_cnv %>%
-                 dplyr::select(phospho_ID, Gene_ID, statistic_cnv_phospho))
+                 dplyr::select(phospho_ID, Gene_ID, statistic_cnv_phospho), by = "Gene_ID")
 
 
   cnv_full <- cnv_std.error %>%
-    inner_join(cnv_estimate) %>%
-    inner_join(cnv_sigma2) %>%
-    inner_join(cnv_df.residual) %>%
-    inner_join(cnv_v) %>%
-    inner_join(cnv_r.squared) %>%
-    inner_join(cnv_statistic)
+    inner_join(cnv_estimate, by = c("Gene_ID", "phospho_ID")) %>%
+    inner_join(cnv_sigma2, by = c("Gene_ID", "phospho_ID")) %>%
+    inner_join(cnv_df.residual, by = c("Gene_ID", "phospho_ID")) %>%
+    inner_join(cnv_v, by = c("Gene_ID", "phospho_ID")) %>%
+    inner_join(cnv_r.squared, by = c("Gene_ID", "phospho_ID")) %>%
+    inner_join(cnv_statistic, by = c("Gene_ID", "phospho_ID"))
 
   cnv_result <- list(
     betas_J = cnv_full %>% dplyr::select(starts_with("estimate")) %>% as.matrix(),
@@ -303,47 +302,47 @@ if (permutate == 1){
   methy_estimate <- rna_methy %>%
     dplyr::select(Gene_ID, Hybridization, estimate_methy_rna) %>%
     inner_join(protein_methy %>%
-                 dplyr::select(Gene_ID, Hybridization, estimate_methy_protein)) %>%
+                 dplyr::select(Gene_ID, Hybridization, estimate_methy_protein), by = c("Gene_ID", "Hybridization")) %>%
     inner_join(phospho_methy %>%
-                 dplyr::select(Gene_ID, Hybridization,Gene_ID, estimate_methy_phospho))
+                 dplyr::select(Gene_ID, Hybridization,Gene_ID, estimate_methy_phospho), by = c("Gene_ID", "Hybridization"))
 
   methy_std.error <- rna_methy %>%
     dplyr::select(Gene_ID, Hybridization, std.error_methy_rna) %>%
     inner_join(protein_methy %>%
-                 dplyr::select(Gene_ID, Hybridization, std.error_methy_protein)) %>%
+                 dplyr::select(Gene_ID, Hybridization, std.error_methy_protein), by = c("Gene_ID", "Hybridization")) %>%
     inner_join(phospho_methy %>%
-                 dplyr::select(Gene_ID, Hybridization,Gene_ID, std.error_methy_phospho))
+                 dplyr::select(Gene_ID, Hybridization,Gene_ID, std.error_methy_phospho), by = c("Gene_ID", "Hybridization"))
 
   methy_sigma2 <- rna_regression_glance %>%
     dplyr::select(Gene_ID,sigma2_rna = sigma_rna) %>%
     inner_join(protein_regression_glance %>%
-                 dplyr::select(Gene_ID, sigma2_protein = sigma_protein)) %>%
+                 dplyr::select(Gene_ID, sigma2_protein = sigma_protein), by = "Gene_ID") %>%
     inner_join(phospho_regression_glance %>%
-                 dplyr::select(Gene_ID, phospho_ID, sigma2_phospho = sigma_phospho)) %>%
+                 dplyr::select(Gene_ID, phospho_ID, sigma2_phospho = sigma_phospho), by = "Gene_ID") %>%
     mutate_if(is.numeric, ~(.^2))
 
   methy_df.residual <- rna_regression_glance %>%
     dplyr::select(Gene_ID, df.residual_rna) %>%
     inner_join(protein_regression_glance %>%
-                 dplyr::select(Gene_ID, df.residual_protein)) %>%
+                 dplyr::select(Gene_ID, df.residual_protein), by = "Gene_ID") %>%
     inner_join(phospho_regression_glance %>%
-                 dplyr::select(Gene_ID, phospho_ID, df.residual_phospho))
+                 dplyr::select(Gene_ID, phospho_ID, df.residual_phospho), by = "Gene_ID")
 
 
   methy_r.squared <- rna_regression_glance %>%
     dplyr::select(Gene_ID, r.squared_rna) %>%
     inner_join(protein_regression_glance %>%
-                 dplyr::select(Gene_ID, r.squared_protein)) %>%
+                 dplyr::select(Gene_ID, r.squared_protein), by = "Gene_ID") %>%
     inner_join(phospho_regression_glance %>%
-                 dplyr::select(Gene_ID, phospho_ID, r.squared_phospho))
+                 dplyr::select(Gene_ID, phospho_ID, r.squared_phospho), by = "Gene_ID")
 
   methy_v <- methy_std.error %>%
     inner_join(rna_regression_glance %>%
                  dplyr::select(Gene_ID, sigma_rna) %>%
                  inner_join(protein_regression_glance %>%
-                              dplyr::select(Gene_ID, sigma_protein)) %>%
+                              dplyr::select(Gene_ID, sigma_protein), by = "Gene_ID") %>%
                  inner_join(phospho_regression_glance %>%
-                              dplyr::select(Gene_ID,phospho_ID, sigma_phospho))) %>%
+                              dplyr::select(Gene_ID,phospho_ID, sigma_phospho), by = "Gene_ID"), by = "Gene_ID") %>%
     mutate(v_rna = (std.error_methy_rna/sigma_rna) ^2,
            v_protein = (std.error_methy_protein/sigma_protein) ^2,
            v_phospho = (std.error_methy_phospho/sigma_phospho) ^2) %>%
@@ -352,18 +351,18 @@ if (permutate == 1){
   methy_statistic <- rna_methy %>%
     dplyr::select(Gene_ID, Hybridization, statistic_methy_rna) %>%
     inner_join(protein_methy %>%
-                 dplyr::select(Gene_ID, Hybridization, statistic_methy_protein)) %>%
+                 dplyr::select(Gene_ID, Hybridization, statistic_methy_protein), by = c("Gene_ID", "Hybridization")) %>%
     inner_join(phospho_methy %>%
-                 dplyr::select(Gene_ID, Hybridization,Gene_ID, statistic_methy_phospho))
+                 dplyr::select(Gene_ID, Hybridization,Gene_ID, statistic_methy_phospho), by = c("Gene_ID", "Hybridization"))
 
 
   methy_full <- methy_std.error %>%
-    inner_join(methy_estimate) %>%
-    inner_join(methy_sigma2) %>%
-    inner_join(methy_df.residual) %>%
-    inner_join(methy_v) %>%
-    inner_join(methy_r.squared) %>%
-    inner_join(methy_statistic)
+    inner_join(methy_estimate, by = c("Gene_ID", "Hybridization")) %>%
+    inner_join(methy_sigma2, by = "Gene_ID") %>%
+    inner_join(methy_df.residual, by = c("Gene_ID", "phospho_ID")) %>%
+    inner_join(methy_v, by = c("Gene_ID", "Hybridization")) %>%
+    inner_join(methy_r.squared, by = c("Gene_ID", "phospho_ID")) %>%
+    inner_join(methy_statistic, by = c("Gene_ID", "Hybridization"))
 
   methy_result <- list(
     betas_J = methy_full %>% dplyr::select(starts_with("estimate")) %>% as.matrix(),

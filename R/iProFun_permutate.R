@@ -11,6 +11,12 @@
 #'
 #' @examples iprofun_permutate
 iprofun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 10){
+  iprofun = iProFun()
+  cnv_1_3 = iprofun$`Gene Posterior Probability` %>%
+    filter(X == "CNA")
+  methy_1_3 = iprofun$`Gene Posterior Probability` %>%
+    filter(X == "Methylation")
+
   for (i in 1 : permutate_number) {
     set.seed(i)
     iprofun_perm_1 <- iProFun(permutate = 1)
@@ -29,11 +35,6 @@ iprofun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(c
     cnv_perm_3 <- iprofun_perm_3$`Gene Posterior Probability` %>%
       filter(X == "CNA")
     methy_perm_3 <- iprofun_perm_3$`Gene Posterior Probability` %>%
-      filter(X == "Methylation")
-    iprofun = iProFun()
-    cnv_1_3 = iprofun$`Gene Posterior Probability` %>%
-      filter(X == "CNA")
-    methy_1_3 = iprofun$`Gene Posterior Probability` %>%
       filter(X == "Methylation")
 
     cnv_filter <- iprofun$Beta %>%

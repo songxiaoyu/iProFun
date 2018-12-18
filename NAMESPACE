@@ -3,7 +3,6 @@
 export(iProFun)
 export(iprofun_permutate)
 import(dplyr)
-import(matrixStats)
 import(metRology)
 import(purrr)
 import(tidyr)
