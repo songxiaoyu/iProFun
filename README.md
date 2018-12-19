@@ -30,7 +30,37 @@ devtools::install_github("songxiaoyu/iProFun")
 <!--     install.packages("devtools") -->
 <!--     devtools::install_github("xiaoyu/iProFun") -->
 <!--     ```` -->
-<!-- ## iProFun Integrative analysis pipeline -->
+Using iProFun
+-------------
+
+Below is an example of iProFun Integrative analysis pipeline. A full description of the method can be found in our [paper](https://www.biorxiv.org/content/early/2018/12/06/488833).
+
+### Data
+
+The sample data: `cna`, `methy`, `rna`, `protein`, `phospho`, `rna_pc_1_3`, `protein_pc_1_3`, `phospho_pc_1_3` are included in the package. A full description of the sample dataset can be found in the help page of the data.
+
+``` r
+library(iProFun)
+data(cna)
+?cna
+```
+
+### iProFun Integrative analysis pipeline
+
+``` r
+iprofun_result <- iProFun(ylist = list(rna, protein, phospho), xlist = list(cna, methy),
+  covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
+  pi = rep(0.05, 3))
+```
+
+``` r
+iprofun_permutate_resultiProFun(ylist = list(rna, protein, phospho), xlist = list(cna, methy),
+  covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
+  pi = rep(0.05, 3))
+```
+
+To be continued... <!-- ## iProFun Integrative analysis pipeline -->
+
 <!-- Below is an example of how iProFun is commonly used.  A full description of the tool can be found in our MCP paper. -->
 <!-- ```{r, include = FALSE} -->
 <!-- require(metRology) -->
