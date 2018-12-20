@@ -1,6 +1,10 @@
 #' iProFun Integrative analysis
 #'
-#' @param ylist mRNA, global protein and phosphoprotein
+#' @param ylist ylist is a list of data matrix. Each matrix is a data type or platform that 
+#' one would like to analyze as an outcome. The matrix is formated as each outcome variable 
+#' (such as gene) as a row, and each sample as a column. Multiple data matrixs need to have 
+#' shared sample ID and variable name for integrative iProFun analysis. Example of ylist is 
+#' a list of mRNA, global protein and phosphoprotein.
 #' @param xlist CNA and methylation
 #' @param covariates sets of covariates adjusted in the regression analyses
 #' @param pi prior probability
