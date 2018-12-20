@@ -1,4 +1,4 @@
-#' Calculate the empirical FDR using permutation
+#' iProFun false discovery rate assessment based on permutations
 #'
 #' @param ylist mRNA, global protein and phosphoprotein
 #' @param xlist CNA and methylation
@@ -7,11 +7,15 @@
 #' @param permutate_number Number of permutation, default 10
 #' @param fdr False Discover Rate, default as 0.1
 #' @param posterior Minimal Posterior Probabilty Cutoff, default as 0.75
-#' @return A list with 3 sublists, the first one is the cutoff values for each greoup based on permutation, the second is the results for iProFun
-#' @export
+#' @return list with 3 components
+#' \item{Posterior Probability Cutoff:}{the cutoff values for each group based on permutation}
+#' \item{iProFun Result:}{A table indicating whether a gene is identified by iProFun or not}
+#' \item{iProFun Result (Negative/Positive):}{A table indicating whether a gene is identified by iProFun or not and whether the association is positive or not}
+#' @export iProFun_permutate
 #'
-#' @examples iprofun_permutate
-iprofun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 10, fdr = 0.1, posterior = 0.75){
+#' @examples
+#' iprofun_permutate_result <- iProFun_permutate(permutate_number = 1)
+iProFun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 10, fdr = 0.1, posterior = 0.75){
   iprofun = iProFun()
   cnv_1_3 = iprofun$`Gene Posterior Probability` %>%
     filter(X == "CNA")

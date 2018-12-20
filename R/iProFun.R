@@ -1,4 +1,4 @@
-#' iProFun Integrative analysis pipeline
+#' iProFun Integrative analysis
 #'
 #' @param ylist mRNA, global protein and phosphoprotein
 #' @param xlist CNA and methylation
@@ -6,7 +6,10 @@
 #' @param pi prior probability
 #' @param permutate whether to permuate or not. 1 = permuatte the first column(mRNA), 2 = permutate the second column, 3 = permutate the third column
 #'
-#' @return A list with 2 lists: The first sublist is the marginal probabilities for each group, the second sublist is the posterior probability for each gene
+#' @return list with 3 components
+#' \item{Marginal Probability:}{marginal posterior probability for each pattern}
+#' \item{Gene Posterior Probability:}{posterior probability for each pattern per methylation site}
+#' \item{Beta:}{Beta coefficients for each gene-level multiple linear regression}
 #' @export iProFun
 #' @importFrom magrittr "%>%"
 #' @import tidyr
@@ -16,6 +19,7 @@
 #' @import metRology
 #' @importFrom matrixStats rowMins
 #' @examples
+#' iprofun_result <- iprofun()
 iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate = 0){
   rna_regression <- ylist[[1]]
   protein_regression <- ylist[[1]]

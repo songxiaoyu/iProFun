@@ -41,7 +41,7 @@ MultiOmics_Input <- function(input, pi1=c(0.0001, 0.0001, 0.0001), cl=NULL, tol=
     curpi<-curmstep[[1]]
     itermat<-rbind(itermat,curpi)
     diff<-sum(abs(itermat[numiters,]-itermat[numiters-1,]))/sum(itermat[numiters-1,])
-    print(c(numiters,diff, curpi))
+    # print(c(numiters,diff, curpi))
   }
 
   betas_J=cbind(xName, yName, betas_J)
