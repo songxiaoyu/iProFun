@@ -1,8 +1,20 @@
 #' iProFun false discovery rate assessment based on permutations
 #'
-#' @param ylist mRNA, global protein and phosphoprotein
-#' @param xlist CNA and methylation
-#' @param covariates sets of covariates adjusted in the regression analyses
+#' @param ylist ylist is a list of data matrix. Each matrix is a data type or platform that
+#' one would like to analyze as an outcome. The matrix is formated as each outcome variable
+#' (such as gene) as a row, and each sample as a column. Multiple data matrixs need to have
+#' shared sample ID and variable name for integrative iProFun analysis. Example of ylist is
+#' a list of mRNA, global protein and phosphoprotein.
+#' @param xlist xlist is a list of data matrix. Each matrix is a data type or platform that
+#' one would like to analyze as an predictor. The matrix is formated as each outcome variable
+#' (such as gene) as a row, and each sample as a column. Multiple data matrixs need to have
+#' shared sample ID and variable name for integrative iProFun analysis. Example of xlist is
+#' a list of cna and methylation.
+#' @param covariates covariates is a list of data matrix. Each matrix is a data type or platform that
+#' one would like to adjust as a covariate. The matrix is formated as each outcome variable
+#'as a row, and each sample as a column. Multiple data matrixs need to have
+#' shared sample ID and variable name for integrative iProFun analysis. Example of covariates is
+#' a list of principle components.
 #' @param pi prior probability
 #' @param permutate_number Number of permutation, default 10
 #' @param fdr False Discover Rate, default as 0.1
@@ -14,7 +26,7 @@
 #' @export iProFun_permutate
 #'
 #' @examples
-#' iprofun_permutate_result <- iProFun_permutate(permutate_number = 1)
+#' iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, posterior = 0.75)
 iProFun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 10, fdr = 0.1, posterior = 0.75){
   iprofun = iProFun()
   cnv_1_3 = iprofun$`Gene Posterior Probability` %>%

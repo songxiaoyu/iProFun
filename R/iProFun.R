@@ -1,12 +1,20 @@
 #' iProFun Integrative analysis
 #'
-#' @param ylist ylist is a list of data matrix. Each matrix is a data type or platform that 
-#' one would like to analyze as an outcome. The matrix is formated as each outcome variable 
-#' (such as gene) as a row, and each sample as a column. Multiple data matrixs need to have 
-#' shared sample ID and variable name for integrative iProFun analysis. Example of ylist is 
+#' @param ylist ylist is a list of data matrix. Each matrix is a data type or platform that
+#' one would like to analyze as an outcome. The matrix is formated as each outcome variable
+#' (such as gene) as a row, and each sample as a column. Multiple data matrixs need to have
+#' shared sample ID and variable name for integrative iProFun analysis. Example of ylist is
 #' a list of mRNA, global protein and phosphoprotein.
-#' @param xlist CNA and methylation
-#' @param covariates sets of covariates adjusted in the regression analyses
+#' @param xlist xlist is a list of data matrix. Each matrix is a data type or platform that
+#' one would like to analyze as an predictor. The matrix is formated as each outcome variable
+#' (such as gene) as a row, and each sample as a column. Multiple data matrixs need to have
+#' shared sample ID and variable name for integrative iProFun analysis. Example of xlist is
+#' a list of cna and methylation.
+#' @param covariates covariates is a list of data matrix. Each matrix is a data type or platform that
+#' one would like to adjust as a covariate. The matrix is formated as each outcome variable
+#'as a row, and each sample as a column. Multiple data matrixs need to have
+#' shared sample ID and variable name for integrative iProFun analysis. Example of covariates is
+#' a list of principle components.
 #' @param pi prior probability
 #' @param permutate whether to permuate or not. 1 = permuatte the first column(mRNA), 2 = permutate the second column, 3 = permutate the third column
 #'
@@ -23,7 +31,7 @@
 #' @import metRology
 #' @importFrom matrixStats rowMins
 #' @examples
-#' iprofun_result <- iprofun()
+#' iprofun_result <- iprofun(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3))
 iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate = 0){
   rna_regression <- ylist[[1]]
   protein_regression <- ylist[[1]]
@@ -44,6 +52,21 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
 
   cnv_regression_long <- cnv_regression %>%
     gather(subject_id, cnv, - Gene_ID) %>% as.tibble()
+
+  protein_pc_1_3 <- protein_pc_1_3 %>%
+    mutate(PC = c("protein_pc1", "protein_pc2", "protein_pc3")) %>%
+    gather(subject_id, pc,-PC) %>% as.tibble %>%
+    spread(PC, pc)
+
+  rna_pc_1_3 <- rna_pc_1_3 %>%
+    mutate(PC = c("rna_pc1", "rna_pc2", "rna_pc3")) %>%
+    gather(subject_id, pc,-PC) %>% as.tibble %>%
+    spread(PC, pc)
+
+  phospho_pc_1_3 <- phospho_pc_1_3 %>%
+    mutate(PC = c("phospho_pc1", "phospho_pc2", "phospho_pc3")) %>%
+    gather(subject_id, pc,-PC) %>% as.tibble %>%
+    spread(PC, pc)
 
   methy_regression_long <- methy_regression %>%
     as.tibble() %>%
