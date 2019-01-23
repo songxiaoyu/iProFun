@@ -6,23 +6,23 @@
 #' shared sample ID and variable name for integrative iProFun analysis. Example of ylist is
 #' a list of mRNA, global protein and phosphoprotein.
 #' @param xlist xlist is a list of data matrix. Each matrix is a data type or platform that
-#' one would like to analyze as an predictor. All data types or platforms are simutaneouosly 
+#' one would like to analyze as an predictor. All data types or platforms are simutaneouosly
 #' considered in the same regression. The matrix is formated as each predictor variable
 #' (such as gene) as a row, and each sample as a column. Multiple data matrixs need to have
 #' shared sample ID and variable name for integrative iProFun analysis. Example of xlist is
 #' a list of CNA and DNA methylation.
 #' @param covariates covariates is a list of data matrix. This list should have the same length
-#' as ylist. For the regression on the ith outcome, the ith covariates matrix contains the variables 
+#' as ylist. For the regression on the ith outcome, the ith covariates matrix contains the variables
 #' that to be adjusted in the regression. The matrix is formated as each covariate variable
 #'as a row, and each sample as a column. Multiple data matrixs need to have
 #' shared sample ID and variable name for integrative iProFun analysis. Example of covariates is
 #' a list of principle components.
 #' @param pi pi is pre-specified priori of proportion of non-null statistics in each set of regression.
 #' iProFun is insensitive to the mis-specification of the priori within a reasonable range.
-#' @param permutate whether to permuate certain data type/platform or not. permutate = 0 (default): no permuatation, analysis 
+#' @param permutate whether to permuate certain data type/platform or not. permutate = 0 (default): no permuatation, analysis
 #' on original data. permutate > 0: permuate the label of outcome for the corresponding data type
 #' in ylist. For example, 2 = permutate the y label of second data matrix (protein)
-#' 
+#'
 #' @return list with 2 components
 #' \item{Averaged posterior Probability:}{Averaged posterior probability for predictor on each association pattern}
 #' \item{Posterior Probability:}{posterior probability for each pattern per predictor}
@@ -38,6 +38,20 @@
 #' iprofun_result <- iprofun(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3))
 
 iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate = 0){
+  #ylength
+  #xlength
+  #zlength
+
+  #stopif zlength!=ylength ("Add error message")
+  #class(xlist)!="list" ('x ...')
+  #the first column of x,y,zlist to the ID to uniquly identify samples.
+  # ID no overlap; error message
+  # ID few overlap; warning message
+  # provide note: iProFun is running on X samples, X predictors that overlaps for ylist[[i]]
+  # covariate name: rna_cov
+  # multiple samples in a ID: treatment to keep other variables as addtional ID.
+
+
   rna_regression <- ylist[[1]]
   protein_regression <- ylist[[1]]
   phospho_regression <- ylist[[3]]
