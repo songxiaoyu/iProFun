@@ -13,7 +13,10 @@
 #' a list of CNA and DNA methylation.
 #' @param covariates covariates is a list of data matrix. This list should have the same length
 #' as ylist. For the regression on the ith outcome, the ith covariates matrix contains the variables
-#' that to be adjusted in the regression. The matrix is formated as each covariate variable
+#' that to be adjusted in the regression.
+#'
+Jiayi, check this sentence. Might be wrong.
+#' The matrix is formated as each covariate variable
 #'as a row, and each sample as a column. Multiple data matrixs need to have
 #' shared sample ID and variable name for integrative iProFun analysis. Example of covariates is
 #' a list of principle components.
