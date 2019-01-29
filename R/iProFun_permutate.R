@@ -19,6 +19,10 @@
 #' @param permutate_number Number of permutation, default 10
 #' @param fdr False Discover Rate, default as 0.1
 #' @param posterior Minimal Posterior Probabilty Cutoff, default as 0.75
+#' @param filter is a vector with the same length of ylist, taking values of 1, -1, 0 or NULL. "1" 
+#' indicates filter in all positive results across multi-omic platforms. XXXX .... Jiayi!!!!
+#' @param thresholds xxx Jiayi 
+#' @param seed Jiayi
 #' @return list with 3 components
 #' \item{Posterior Probability Cutoff:}{the cutoff values for each group based on permutation}
 #' \item{iProFun Result:}{A table indicating whether a gene is identified by iProFun or not}
@@ -27,8 +31,15 @@
 #'
 #' @examples
 #' iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, posterior = 0.75)
-iProFun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 10, fdr = 0.1, posterior = 0.75){
-  iprofun = iprofun_new(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3))
+iProFun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), 
+                             covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), 
+                             pi = rep(0.05, 3), permutate_number = 10, fdr = 0.1, posterior = 0.75, 
+                             filter = NULL, thresholds=seq(0.75, 0.99), seed=.Random.seed[1]){
+  
+  # rename to initial.result
+  iprofun = iprofun(ylist = ylist, xlist = xlist, covariates = covariates, pi=pi,permutate_number=0 )
+  
+  # just use initual.result[[p]] 
   cnv_1_3 = iprofun$`Gene Posterior Probability` %>%
     filter(X == "CNA")
   methy_1_3 = iprofun$`Gene Posterior Probability` %>%
@@ -62,7 +73,9 @@ iProFun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(c
   )
 
   for (i in 1 : permutate_number) {
-    set.seed(i)
+    # by k - indicator of ylength
+    # by p - indicator of xlength 
+    set.seed(seed)
     iprofun_perm_1 <- iprofun_new(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), permutate = 1)
     cnv_perm_1 <- iprofun_perm_1$`Gene Posterior Probability` %>%
       filter(X == "CNA")
@@ -82,7 +95,7 @@ iProFun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(c
       filter(X == "Methylation")
 
 
-    thresholds <- c(seq(0.05, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001))
+    thresholds <- c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001))
     methy_perm_1_original <- vector("numeric", length(thresholds))
     cnv_perm_1_original <- vector("numeric", length(thresholds))
     methy_perm_2_original <- vector("numeric", length(thresholds))
@@ -95,6 +108,7 @@ iProFun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(c
     cnv_perm_3_count <- vector("numeric", length(thresholds))
     methy_perm_1_count <- vector("numeric", length(thresholds))
     cnv_perm_1_count <- vector("numeric", length(thresholds))
+    
     result <- vector("list", permutate_number)
     for (j in 1:length(thresholds)) {
 

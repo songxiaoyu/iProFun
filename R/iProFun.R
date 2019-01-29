@@ -39,9 +39,7 @@
 #' iprofun_result <- iprofun(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3))
 
 iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate = 0){
-  #ylength
-  #xlength
-  #zlength
+
 
   #stopif zlength!=ylength ("Add error message")
   #class(xlist)!="list" ('x ...')
@@ -55,12 +53,13 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
 
   ylength=length(ylist)
   xlength=length(xlist)
-  # How to specify the common Gene ID in general?
+  # How to specify the common Gene ID in general? -> 1st column, y.ID="", x.ID="", ID=""
   xyCommonGeneID <- ylist[[1]]$Gene_ID
-  # "TCGA" need to be generalized
+  # "TCGA" need to be generalized -> sub.ID.ind = "TCGA" 
   xyCommonSubID <- lapply(1:ylength, function(i) names(ylist[[i]])[grepl("TCGA", names(ylist[[i]]))])
   xyCommonSubID_permutate <- lapply(xyCommonSubID, sample)
-
+  # colum.to.keep = ID or c(ID, "Phospho_ID") from X or Y in output
+  
   # estimate
   betas_J=NULL; betas_se_J=NULL; sigma2_J=NULL; dfs_J=NULL; v_g_J=NULL; betas_J_2=NULL; betas_se_J_2=NULL; v_g_J_2=NULL; yName=NULL; xName=NULL; xName_2 = NULL; sigma2_J_2=NULL; dfs_J_2=NULL;yName_2=NULL;
 
@@ -89,7 +88,7 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
       zz = as.matrix(cbind(1, t(covariates_model)))
       p_xx=ncol(xx)
       p_x=ncol(x)
-      inverse_xx<-my.solve(t(xx) %*% xx)
+     inverse_xx<-my.solve(t(xx) %*% xx) # this function does not deal with missing data. - direct output from regression. 
       n=nrow(y)
 
       # select y
@@ -128,6 +127,8 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
       v_g_2=rbind(v_g_2, as.matrix(diag(t(C_2) %*% inverse_xx %*% C_2)))
       dfs_2=rbind(dfs_2, as.matrix(rep(df1, p_x_2)))
       sigma2_2=rbind(sigma2_2, as.matrix(rep(s_g_square, p_x_2)))
+      
+      
       # annotation
 
       if (j==3) {
@@ -154,12 +155,21 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
   }
   x_1_list <- list(betas_J=betas_J, betas_se_J=betas_se_J, sigma2_J=sigma2_J,dfs_J=dfs_J, v_g_J = v_g_J, xName = xName, yName = yName)
   x_2_list <- list(betas_J=betas_J_2, betas_se_J=betas_se_J_2, sigma2_J=sigma2_J_2,dfs_J=dfs_J_2, v_g_J = v_g_J_2, xName = xName_2, yName = yName_2)
-  # Primo (The following names need to be generalized) ------------------------------------------------------------------
-  cnv_iprofun <- MultiOmics_Input(x_1_list,pi1 = pi) # You don't know x is cnv and y is methy
-  methy_iprofun <- MultiOmics_Input(x_2_list,pi1 = pi)
+  
+  # Primo with regression results (The following names need to be generalized) ------------------------------------------------------------------
+  # length depends on xlist
+  for (p in xlength) {
+    "x[p]"_iProFun <- MultiOmics_Input(x_[p]_list,pi1 = pi) # You don't know x is cnv and y is methy
+  }
+
+  Q= 2^ylength
+  Q matrix: "000", "100", 010, 001, ....  -> Lins codes  
+  
+  # rbind might be difficult to program and hard to understand. Output lists with xlength is fine. 
+  
   iprofun_result <- list("Marginal Probability" = tibble(group =
                                                            c(
-                                                             "None",
+                                                             "000",
                                                              "RNA only",
                                                              "Protein only",
                                                              "Phosphosite only",
