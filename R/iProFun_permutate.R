@@ -28,59 +28,59 @@
 #' @examples
 #' iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, posterior = 0.75)
 iProFun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 10, fdr = 0.1, posterior = 0.75){
-  iprofun = iProFun()
+  iprofun = iprofun_new(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3))
   cnv_1_3 = iprofun$`Gene Posterior Probability` %>%
     filter(X == "CNA")
   methy_1_3 = iprofun$`Gene Posterior Probability` %>%
     filter(X == "Methylation")
+  cnv_filter <- iprofun$Beta %>%
+    dplyr::filter(
+      X == "CNA",
+      `1` > 0,
+      `2` > 0,
+      `3` > 0
+    ) %>%
+    pull(Gene_ID)
+
+  methy_filter <- c(
+    iprofun$Beta %>%
+      dplyr::filter(
+        X == "Methylation",
+        `1` > 0,
+        `2` > 0,
+        `3` > 0
+      ) %>%
+      pull(Hybridization),
+    iprofun$Beta %>%
+      dplyr::filter(
+        X == "Methylation",
+        `1` < 0,
+        `2` < 0,
+        `3` < 0
+      ) %>%
+      pull(Hybridization)
+  )
 
   for (i in 1 : permutate_number) {
     set.seed(i)
-    iprofun_perm_1 <- iProFun(permutate = 1)
+    iprofun_perm_1 <- iprofun_new(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), permutate = 1)
     cnv_perm_1 <- iprofun_perm_1$`Gene Posterior Probability` %>%
       filter(X == "CNA")
     methy_perm_1 <- iprofun_perm_1$`Gene Posterior Probability` %>%
       filter(X == "Methylation")
 
-    iprofun_perm_2 <- iProFun(permutate = 2)
+    iprofun_perm_2 <- iprofun_new(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), permutate = 2)
     cnv_perm_2 <- iprofun_perm_2$`Gene Posterior Probability` %>%
       filter(X == "CNA")
     methy_perm_2 <- iprofun_perm_2$`Gene Posterior Probability` %>%
       filter(X == "Methylation")
 
-    iprofun_perm_3 <- iProFun(permutate = 3)
+    iprofun_perm_3 <- iprofun_new(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), permutate = 3)
     cnv_perm_3 <- iprofun_perm_3$`Gene Posterior Probability` %>%
       filter(X == "CNA")
     methy_perm_3 <- iprofun_perm_3$`Gene Posterior Probability` %>%
       filter(X == "Methylation")
 
-    cnv_filter <- iprofun$Beta %>%
-      dplyr::filter(
-        X == "CNA",
-        estimate_cnv_rna > 0,
-        estimate_cnv_protein > 0,
-        estimate_cnv_phospho > 0
-      ) %>%
-      pull(Gene_ID)
-
-    methy_filter <- c(
-      iprofun$Beta %>%
-        dplyr::filter(
-          X == "Methylation",
-          estimate_methy_rna > 0,
-          estimate_methy_protein > 0,
-          estimate_methy_phospho > 0
-        ) %>%
-        pull(Hybridization),
-      iprofun$Beta %>%
-        dplyr::filter(
-          X == "Methylation",
-          estimate_methy_rna < 0,
-          estimate_methy_protein < 0,
-          estimate_methy_phospho < 0
-        ) %>%
-        pull(Hybridization)
-    )
 
     thresholds <- c(seq(0.05, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001))
     methy_perm_1_original <- vector("numeric", length(thresholds))
@@ -139,7 +139,7 @@ iProFun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(c
 
 
     result[[i]] <- MR1
-    # write.csv(MR1, paste0("result/Multiple Regression PC3_seed_", i, ".csv"))
+    write.csv(MR1, paste0("MCP/Rdata/MCP_CV3_seed_", i, ".csv"))
     print(paste("Finish Seed", i))
   }
   CCRCC_permutation_mean <- bind_rows(result, .id = "Seed") %>%
@@ -208,7 +208,7 @@ iProFun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(c
 
   iProFun_GeneList_negative <- iProFun_GeneList %>%
     mutate(`Methy RNA` = case_when(Gene %in% methy_all_negative ~ -`Methy RNA`,
-           TRUE ~ `Methy RNA`),
+                                   TRUE ~ `Methy RNA`),
            `Methy Protein` = case_when(Gene %in% methy_all_negative ~ -`Methy Protein`,
                                        TRUE ~ `Methy Protein`),
            `Methy Phospho` = case_when(Gene %in% methy_all_negative ~ -`Methy Phospho`,
@@ -233,7 +233,7 @@ iProFun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(c
   )
 
   result_permutate <- list("Posterior Probability Cutoff" = cutoff,
-                 "iProFun Result" = iProFun_GeneList,
-                 "iProFun Result (Negative/Positive)" = iProFun_GeneList_negative)
+                           "iProFun Result" = iProFun_GeneList,
+                           "iProFun Result (Negative/Positive)" = iProFun_GeneList_negative)
   return(result_permutate)
 }
