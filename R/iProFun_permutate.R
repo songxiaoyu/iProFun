@@ -31,10 +31,9 @@
 #'
 #' @examples
 #' iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, posterior = 0.75)
-iProFun_permutate = function(ylist = list(rna, protein, phospho), xlist = list(cna, methy),
-                             covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
+iProFun_permutate = function(ylist, xlist, covariates,
                              pi = rep(0.05, 3), permutate_number = 10, fdr = 0.1, posterior = 0.75, thresholds = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001))){
-                             # ,filter = NULL, seed=.Random.seed[1]
+                             # ,filter = NULL, seed=?.Random.seed
 
   iprofun_result = iProFun(ylist = ylist, xlist = xlist, covariates = covariates, pi=pi, permutate = 0 )
 

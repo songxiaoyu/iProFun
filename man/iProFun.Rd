@@ -4,9 +4,9 @@
 \alias{iProFun}
 \title{iProFun Integrative analysis}
 \usage{
-iProFun(ylist = list(rna, protein, phospho), xlist = list(cna, methy),
-  covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
-  pi = rep(0.05, 3), permutate = 0)
+iProFun(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
+  x.ID = NULL, y.ID = NULL, ID = NULL, colum.to.keep = NULL,
+  missing.rate.filter = NULL)
 }
 \arguments{
 \item{ylist}{ylist is a list of data matrix. Each matrix is a data type or platform that
@@ -16,26 +16,31 @@ shared sample ID and variable name for integrative iProFun analysis. Example of 
 a list of mRNA, global protein and phosphoprotein.}
 
 \item{xlist}{xlist is a list of data matrix. Each matrix is a data type or platform that
-one would like to analyze as an predictor. The matrix is formated as each outcome variable
+one would like to analyze as an predictor. All data types or platforms are simutaneouosly
+considered in the same regression. The matrix is formated as each predictor variable
 (such as gene) as a row, and each sample as a column. Multiple data matrixs need to have
 shared sample ID and variable name for integrative iProFun analysis. Example of xlist is
-a list of cna and methylation.}
+a list of CNA and DNA methylation.}
 
-\item{covariates}{covariates is a list of data matrix. Each matrix is a data type or platform that
-one would like to adjust as a covariate. The matrix is formated as each outcome variable
+\item{covariates}{covariates is a list of data matrix. This list should have the same length
+as ylist. For the regression on the ith outcome, the ith covariates matrix contains the variables
+that to be adjusted in the regression.
+The matrix is formated as each covariate variable
 as a row, and each sample as a column. Multiple data matrixs need to have
 shared sample ID and variable name for integrative iProFun analysis. Example of covariates is
 a list of principle components.}
 
-\item{pi}{prior probability}
+\item{pi}{pi is pre-specified priori of proportion of non-null statistics in each set of regression.
+iProFun is insensitive to the mis-specification of the priori within a reasonable range.}
 
-\item{permutate}{whether to permuate or not. 1 = permuatte the first column(mRNA), 2 = permutate the second column, 3 = permutate the third column}
+\item{permutate}{whether to permuate certain data type/platform or not. permutate = 0 (default): no permuatation, analysis
+on original data. permutate > 0: permuate the label of outcome for the corresponding data type
+in ylist. For example, 2 = permutate the y label of second data matrix (protein)}
 }
 \value{
-list with 3 components
-\item{Marginal Probability:}{marginal posterior probability for each pattern}
-\item{Gene Posterior Probability:}{posterior probability for each pattern per methylation site}
-\item{Beta:}{Beta coefficients for each gene-level multiple linear regression}
+list with 2 components
+\item{Averaged posterior Probability:}{Averaged posterior probability for predictor on each association pattern}
+\item{Posterior Probability:}{posterior probability for each pattern per predictor}
 }
 \description{
 iProFun Integrative analysis

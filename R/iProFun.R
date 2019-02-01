@@ -38,7 +38,9 @@
 #' @examples
 #' iprofun_result <- iprofun(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3))
 
-iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate = 0){
+iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
+                    x.ID=NULL, y.ID=NULL, ID=NULL, colum.to.keep=NULL,
+                    missing.rate.filter=NULL){
 
 
   #stopif zlength!=ylength ("Add error message")
@@ -48,15 +50,21 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
   # ID few overlap; warning message
   # provide note: iProFun is running on X samples, X predictors that overlaps for ylist[[i]]
   # covariate name: rna_cov
-  # multiple samples in a ID: treatment to keep other variables as addtional ID.
+  # 
 
 
   ylength=length(ylist)
   xlength=length(xlist)
   # How to specify the common Gene ID in general? -> 1st column, y.ID="", x.ID="", ID=""
   xyCommonGeneID <- ylist[[1]]$Gene_ID
+  
+  # add function to convert from ylist[[1]]$Gene_ID to xyCommonGeneID 
+  
   # "TCGA" need to be generalized -> sub.ID.ind = "TCGA"
   xyCommonSubID <- lapply(1:ylength, function(i) names(ylist[[i]])[grepl("TCGA", names(ylist[[i]]))])
+  
+  # convert SubID to xyCommonSubID 
+  
   xyCommonSubID_permutate <- lapply(xyCommonSubID, sample)
   # colum.to.keep = ID or c(ID, "Phospho_ID") from X or Y in output
 
@@ -71,30 +79,35 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
       # more than one x or y from a gene is possible: select the most significant y; run every x.
 
       if (j == permutate){
+        # ylist[[j]]$Gene_ID does not exist, create Gene_ID
         y=ylist[[j]][ ylist[[j]]$Gene_ID==xyCommonGeneID[i] , xyCommonSubID_permutate[[j]]]
       } else {
         y=ylist[[j]][ ylist[[j]]$Gene_ID==xyCommonGeneID[i] , xyCommonSubID[[j]]]
       }
 
       y=data.frame(t(y))
+      # xlist[[1]] Why? Make x everything from xlist with length xlist
       x= xlist[[1]][xlist[[1]]$Gene_ID==xyCommonGeneID[i] , xyCommonSubID[[j]]]
-      x=data.frame(t(x))
-
+      # indicate how many x per xlist. 
+      x=data.frame(t(x))     
+      
+      # z comes from covariate 
       z= xlist[[-1]][xlist[[-1]]$Gene_ID==xyCommonGeneID[i] , xyCommonSubID[[j]]]
       covariates_model = covariates[[j]][, xyCommonSubID[[j]]]
       z = cbind(t(z), t(covariates_model))
 
       xx=as.matrix(cbind(1, x, z))
-      zz = as.matrix(cbind(1, t(covariates_model)))
+      zz = as.matrix(cbind(1, z))
       p_xx=ncol(xx)
       p_x=ncol(x)
      # inverse_xx<-my.solve(t(xx) %*% xx) # this function does not deal with missing data. - direct output from regression.
-      n=nrow(y)
-      y = as.matrix(y)[complete.cases(xx), ,drop = F]
-      zz = zz[complete.cases(xx), ]
-      xx = xx[complete.cases(xx), ]
-      # select y
-      yindex=which.min(sapply(1:ncol(y), function(f) anova(lm(y[,f]~xx-1), lm(y[,f]~zz-1))$"Pr(>F)"[2]))
+      # n=nrow(y)
+      y_complete = as.matrix(y)[complete.cases(xx), ,drop = F]
+      zz_complete = zz[complete.cases(xx), ]
+      xx_complete = xx[complete.cases(xx), ]
+      # select y by anova
+      
+      yindex=which.min(sapply(1:ncol(y), function(f) anova(lm(y_complete[,f]~xx_complete-1), lm(y_complete[,f]~zz_complete-1))$"Pr(>F)"[2]))
       yy=y[,yindex]
 
       ft=lm(yy~xx-1)
