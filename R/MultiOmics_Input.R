@@ -46,7 +46,8 @@ MultiOmics_Input <- function(input, pi1=c(0.0001, 0.0001, 0.0001), cl=NULL, tol=
 
   betas_J=cbind(xName, yName, betas_J)
   betas_se_J=cbind(xName, yName, betas_se_J)
+  raw_prob = curb
   curb=cbind( xName, curb) ### with name here
 
-  return(list(NoComputation=dim(betas_J)[1], Config=Q, PostProb = curb, colocProb = curpi, Tstat_L = Tstat_L, D0=D0, D1=D1))
+  return(list(NoComputation=dim(betas_J)[1], Config=Q, PostProb = curb, colocProb = curpi, Tstat_L = Tstat_L, D0=D0, D1=D1, raw_postprob = raw_prob, xname = xName, yName = yName))
 }

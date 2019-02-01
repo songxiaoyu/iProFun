@@ -55,11 +55,11 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
   xlength=length(xlist)
   # How to specify the common Gene ID in general? -> 1st column, y.ID="", x.ID="", ID=""
   xyCommonGeneID <- ylist[[1]]$Gene_ID
-  # "TCGA" need to be generalized -> sub.ID.ind = "TCGA" 
+  # "TCGA" need to be generalized -> sub.ID.ind = "TCGA"
   xyCommonSubID <- lapply(1:ylength, function(i) names(ylist[[i]])[grepl("TCGA", names(ylist[[i]]))])
   xyCommonSubID_permutate <- lapply(xyCommonSubID, sample)
   # colum.to.keep = ID or c(ID, "Phospho_ID") from X or Y in output
-  
+
   # estimate
   betas_J=NULL; betas_se_J=NULL; sigma2_J=NULL; dfs_J=NULL; v_g_J=NULL; betas_J_2=NULL; betas_se_J_2=NULL; v_g_J_2=NULL; yName=NULL; xName=NULL; xName_2 = NULL; sigma2_J_2=NULL; dfs_J_2=NULL;yName_2=NULL;
 
@@ -88,9 +88,11 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
       zz = as.matrix(cbind(1, t(covariates_model)))
       p_xx=ncol(xx)
       p_x=ncol(x)
-     inverse_xx<-my.solve(t(xx) %*% xx) # this function does not deal with missing data. - direct output from regression. 
+     # inverse_xx<-my.solve(t(xx) %*% xx) # this function does not deal with missing data. - direct output from regression.
       n=nrow(y)
-
+      y = as.matrix(y)[complete.cases(xx), ,drop = F]
+      zz = zz[complete.cases(xx), ]
+      xx = xx[complete.cases(xx), ]
       # select y
       yindex=which.min(sapply(1:ncol(y), function(f) anova(lm(y[,f]~xx-1), lm(y[,f]~zz-1))$"Pr(>F)"[2]))
       yy=y[,yindex]
@@ -111,7 +113,7 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
 
       sigma2=rbind(sigma2, as.matrix(rep(s_g_square, p_x)))
       dfs=rbind(dfs, as.matrix(rep(df1, p_x)))
-      v_g=rbind(v_g, as.matrix(diag(t(C) %*% inverse_xx %*% C)))
+      # v_g=rbind(v_g, as.matrix(diag(t(C) %*% inverse_xx %*% C)))
 
       ### for the other x (make the assumption that there are only 2 x)
       x_2 = xlist[[2]][xlist[[2]]$Gene_ID==xyCommonGeneID[i] , xyCommonSubID[[j]]]
@@ -124,11 +126,11 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
       betas_2=rbind(betas_2, t(C_2) %*% alphas) # variable of interest
       betas_se_2=rbind(betas_se_2, t(C_2) %*% summary(ft)$coef[,2])
       # sigma2, dfs are the same as the first x
-      v_g_2=rbind(v_g_2, as.matrix(diag(t(C_2) %*% inverse_xx %*% C_2)))
+      # v_g_2=rbind(v_g_2, as.matrix(diag(t(C_2) %*% inverse_xx %*% C_2)))
       dfs_2=rbind(dfs_2, as.matrix(rep(df1, p_x_2)))
       sigma2_2=rbind(sigma2_2, as.matrix(rep(s_g_square, p_x_2)))
-      
-      
+
+
       # annotation
 
       if (j==3) {
@@ -150,63 +152,62 @@ iProFun <- function(ylist = list(rna, protein, phospho), xlist = list(cna, methy
     sigma2_J_2=cbind(sigma2_J_2, sigma2_2);
     dfs_J=cbind(dfs_J, dfs);
     dfs_J_2=cbind(dfs_J_2, dfs_2);
-    v_g_J=cbind(v_g_J, v_g)
-    v_g_J_2=cbind(v_g_J_2, v_g_2)
+    v_g_J = ((betas_se_J)/sqrt(sigma2_J))^2
+    v_g_J_2 = ((betas_se_J_2)/sqrt(sigma2_J_2))^2
   }
   x_1_list <- list(betas_J=betas_J, betas_se_J=betas_se_J, sigma2_J=sigma2_J,dfs_J=dfs_J, v_g_J = v_g_J, xName = xName, yName = yName)
   x_2_list <- list(betas_J=betas_J_2, betas_se_J=betas_se_J_2, sigma2_J=sigma2_J_2,dfs_J=dfs_J_2, v_g_J = v_g_J_2, xName = xName_2, yName = yName_2)
-  
-  # Primo with regression results (The following names need to be generalized) ------------------------------------------------------------------
-  # length depends on xlist
-  for (p in xlength) {
-    "x[p]"_iProFun <- MultiOmics_Input(x_[p]_list,pi1 = pi) # You don't know x is cnv and y is methy
+
+  # Primo with regression results  ------------------------------------------------------------------
+
+  for (i in 1:xlength) {
+    assign(paste0("x_", i, "_iProFun"), MultiOmics_Input(eval(parse(text = paste0("x_", i, "_list"))),pi1 = pi) )
   }
 
-  Q= 2^ylength
-  Q matrix: "000", "100", 010, 001, ....  -> Lins codes  
-  
-  # rbind might be difficult to program and hard to understand. Output lists with xlength is fine. 
-  
-  iprofun_result <- list("Marginal Probability" = tibble(group =
-                                                           c(
-                                                             "000",
-                                                             "RNA only",
-                                                             "Protein only",
-                                                             "Phosphosite only",
-                                                             "RNA & Protein",
-                                                             "RNA & Phospho",
-                                                             "Protein & Phospho",
-                                                             "All three"
-                                                           ), "CNA" = cnv_iprofun$colocProb,"Methy" = methy_iprofun$colocProb),
-                         "Gene Posterior Probability" = methy_iprofun$PostProb %>%
-                           as.tibble() %>%
-                           mutate(X = "Methylation") %>%
-                           select(X, everything()) %>%
-                           # magrittr::set_names(c("Gene_ID", "None","RNA only","Protein only","Phosphosite only","RNA & Protein" ,"RNA & Phospho" ,"Protein & Phospho", "All three"))
-                           rename("None" = `1` ,
-                                  "RNA only" = `2`,
-                                  "Protein only" = `3` ,
-                                  "Phosphosite only" = `4` ,
-                                  "RNA & Protein" = `5` ,
-                                  "RNA & Phospho" = `6`,
-                                  "Protein & Phospho" = `7`,
-                                  "All three" = `8`) %>%
-                           bind_rows(cnv_iprofun$PostProb %>%
-                                       as.tibble() %>%
-                                       mutate_at(vars(V2:V9), as.numeric) %>%
-                                       magrittr::set_names(c("Gene_ID", "None","RNA only","Protein only","Phosphosite only","RNA & Protein" ,"RNA & Phospho" ,"Protein & Phospho", "All three")) %>%
-                                       mutate(X = "CNA") %>%
-                                       # rename("None" = `V1` ,
-                                       #        "RNA only" = `V2`,
-                                       #        "Protein only" = `V3` ,
-                                       #        "Phosphosite only" = `V4` ,
-                                       #        "RNA & Protein" = `V5` ,
-                                       #        "RNA & Phospho" = `V6`,
-                                       #        "Protein & Phospho" = `V7`,
-                                       #        "All three" = `V8`) %>%
-                                       mutate(Hybridization = NA_character_, chr = NA_character_) ),
-                         "Beta" = cbind(x_1_list$xName, x_1_list$betas_J) %>% as.tibble() %>%mutate_at(vars(V2:V4), as.numeric) %>% mutate(Hybridization = NA_character_, chr = NA_character_, X = "CNA") %>% rename(Gene_ID = V1, `1` =V2,  `2`  =V3, `3` = V4) %>% bind_rows(
-                           cbind(x_2_list$xName, x_2_list$betas_J) %>% as.tibble() %>%
-                             mutate(X = "Methylation")))
-  return(iprofun_result)
+  Q = makeQ(1:ylength)
+  group <- NULL
+  for (i in 1: dim(Q)[1]){
+    group = c(group, paste(Q[i,], collapse = ""))
+  }
+  # Output lists with the following:
+
+  # group
+  for (i in 1:xlength) {
+    assign(paste0("x_", i, "_iProFun_marginal_probability"), eval(parse(text = paste0("x_",i, "_iProFun")))$colocProb)
+  }
+  # x_1_iProFun_marginal_probability
+  # x_2_iProFun_marginal_probability
+
+  for (i in 1:xlength) {
+    assign(paste0("x_", i, "_iProFun_gene_posterior_probability"), as.data.frame(eval(parse(text = paste0("x_",i, "_iProFun")))$PostProb))
+  }
+  # x_1_iProFun_gene_posterior_probability %>% head
+
+  for (i in 1:xlength) {
+    assign(paste0("x_", i, "_iProFun_gene_beta"), cbind(as.data.frame(eval(parse(text = paste0("x_",i, "_list")))$xName), eval(parse(text = paste0("x_",i, "_list")))$betas_J))
+  }
+  # x_1_iProFun_gene_beta
+  # x_2_iProFun_gene_beta
+
+  final_result <- vector(mode="list", length=6*xlength + 1)
+  names(final_result)[1] <- "group"
+
+  for (i in 1:xlength) {
+    names(final_result)[i+1] = paste0("x_",i, "_iProFun_marginal_probability")
+    names(final_result)[(i+xlength+1)] <- paste0("x_",i, "_iProFun_gene_posterior_probability")
+    names(final_result)[(i+2*xlength+1)] <- paste0("x_",i, "_iProFun_gene_beta")
+    names(final_result)[(i+3*xlength+1)] <- paste0("x_",i, "_iProFun_gene_posterior_probability_only")
+    names(final_result)[(i+4*xlength+1)] <- paste0("x_",i, "_xName")
+    names(final_result)[(i+5*xlength+1)] <- paste0("x_",i, "_yName")
+  }
+  final_result[[1]] <- group
+  for (i in 1:xlength) {
+    final_result[[i+1]] = eval(parse(text = paste0("x_",i, "_iProFun_marginal_probability")))
+    final_result[[(i+xlength+1)]] <- eval(parse(text = paste0("x_",i, "_iProFun_gene_posterior_probability")))
+    final_result[[(i+2*xlength+1)]] <- eval(parse(text = paste0("x_",i, "_iProFun_gene_beta")))
+    final_result[[(i+3*xlength+1)]] <- eval(parse(text = paste0("x_",i, "_iProFun")))$raw_postprob
+    final_result[[(i+4*xlength+1)]] <- eval(parse(text = paste0("x_",i, "_iProFun")))$xname
+    final_result[[(i+5*xlength+1)]] <- eval(parse(text = paste0("x_",i, "_iProFun")))$yName
+  }
+  return(final_result)
 }
