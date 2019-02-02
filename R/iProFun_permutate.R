@@ -37,8 +37,25 @@ iProFun_permutate = function(ylist, xlist, covariates,
 
   iprofun_result = iProFun(ylist = ylist, xlist = xlist, covariates = covariates, pi=pi, permutate = 0 )
 
-  # need to add filter here
-  # result <- vector("list", permutate_number)
+  # need to add check function for filter function here
+
+  for (i in 1: length(xlist)){
+    if (filter[i] == 1){
+      assign(paste0("x_", i, "_filter_gene"), iprofun_result[[paste0("x_", i, "_xName")]][apply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]][,sapply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]],is.numeric)], 1, function(x) all(x > 0)),])
+    }
+
+    if (filter[i] == -1){
+      assign(paste0("x_", i, "_filter_gene"), iprofun_result[[paste0("x_", i, "_xName")]][apply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]][,sapply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]],is.numeric)], 1, function(x) all(x < 0)),])
+    }
+
+    if (filter[i] == 0){
+      assign(paste0("x_", i, "_filter_gene"), c(iprofun_result[[paste0("x_", i, "_xName")]][apply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]][,sapply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]],is.numeric)], 1, function(x) all(x > 0)),], iprofun_result[[paste0("x_", i, "_xName")]][apply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]][,sapply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]],is.numeric)], 1, function(x) all(x < 0)),]))
+    }
+    if (is.null(filter[i]) ){
+      assign(paste0("x_", i, "_filter_gene"), iprofun_result[[paste0("x_", i, "_xName")]])
+    }
+  }
+
   for (j in 1:length(ylist)) {
     for (k in 1:length(xlist)) {
       for (p in 1:length(permutate_number)) {
@@ -59,7 +76,7 @@ iProFun_permutate = function(ylist, xlist, covariates,
 
     }
   }
-
+  # The following codes run the permutation "permutate_number" of times (each permutaion consist of "length(ylist)" times of sub-permutation)
   for (i in 1 : permutate_number) {
     # set.seed(seed)
     set.seed(i)
@@ -104,6 +121,7 @@ iProFun_permutate = function(ylist, xlist, covariates,
         }
       }
     }
+    # The following codes paste the numbers into a vector
     for (j in 1:length(ylist)) {
       for (k in 1:length(xlist)) {
         for (p in 1:length(thresholds)) {
@@ -123,7 +141,7 @@ iProFun_permutate = function(ylist, xlist, covariates,
         }
       }
     }
-
+    # The following codes calculte the empirical FDR
     for (j in 1:length(ylist)) {
       for (k in 1:length(xlist)) {
         assign(paste0("x_", k, "_iprofun_perm_", j, "_fdr_", i, "_permutate"),
