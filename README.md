@@ -30,7 +30,7 @@ devtools::install_github("songxiaoyu/iProFun")
 <!-- * the latest development version from GitHub with -->
 <!--     ```R -->
 <!--     install.packages("devtools") -->
-<!--     devtools::install_github("xiaoyu/iProFun") -->
+<!--     devtools::install_github("xiaoyu/Rpackage/iProFun") -->
 <!--     ```` -->
 Example of use
 --------------
