@@ -57,139 +57,96 @@ iprofun_result <- iProFun(ylist = list(rna, protein, phospho), xlist = list(cna,
   pi = rep(0.05, 3))
 ```
 
-The result of the function contains a list with three tibbles. The first tibble shows the marginal posterior probability for each pattern.
+The result of the function contains a list with the following components. The first component shows the names for each pattern. `000` means none, `010` means only the second element in the xlist present.
 
 ``` r
-iprofun_result$`Marginal Probability`
+iprofun_result$group
 ```
 
-    ## # A tibble: 8 x 3
-    ##   group                  CNA      Methy
-    ##   <chr>                <dbl>      <dbl>
-    ## 1 None              3.35e- 2 0.610     
-    ## 2 RNA only          2.00e- 7 0.0465    
-    ## 3 Protein only      1.01e-13 0.00000214
-    ## 4 Phosphosite only  2.53e- 6 0.00778   
-    ## 5 RNA & Protein     5.16e- 1 0.294     
-    ## 6 RNA & Phospho     5.69e-10 0.00796   
-    ## 7 Protein & Phospho 5.84e-16 0.0000181 
-    ## 8 All three         4.50e- 1 0.0346
+    ## [1] "000" "100" "010" "001" "110" "101" "011" "111"
 
-The second tibble shows the posterior probability for each pattern per methylation site.
+The following two components shows the marginal posterior probability for each pattern.
 
 ``` r
-iprofun_result$`Gene Posterior Probability`
+iprofun_result$x_1_iProFun_marginal_probability
 ```
 
-    ## # A tibble: 1,779 x 11
-    ##    X     Gene_ID Hybridization    None `RNA only` `Protein only`
-    ##    <chr> <chr>   <chr>           <dbl>      <dbl>          <dbl>
-    ##  1 Meth… AAAS    cg00559473    8.36e-1   0.0254    0.00000356   
-    ##  2 Meth… AAAS    cg23032316    9.69e-1   0.0157    0.000000729  
-    ##  3 Meth… ABCC1   cg17199483    9.81e-1   0.0132    0.000000282  
-    ##  4 Meth… ABI1    cg17918201    2.73e-4   0.0983    0.00000000187
-    ##  5 Meth… ABI1    cg23087130    6.06e-1   0.00559   0.0000309    
-    ##  6 Meth… ABI2    cg09845946    2.08e-1   0.119     0.000000905  
-    ##  7 Meth… ABLIM1  cg05064181    9.98e-1   0.000806  0.000000292  
-    ##  8 Meth… ACLY    cg24124398    7.96e-1   0.0260    0.00000386   
-    ##  9 Meth… ACLY    cg25687894    9.86e-1   0.00437   0.00000154   
-    ## 10 Meth… ACTL6A  cg03667091    8.51e-1   0.0481    0.00000137   
-    ## # ... with 1,769 more rows, and 5 more variables: `Phosphosite
-    ## #   only` <dbl>, `RNA & Protein` <dbl>, `RNA & Phospho` <dbl>, `Protein &
-    ## #   Phospho` <dbl>, `All three` <dbl>
+    ## [1] 1.661135e-02 8.670947e-02 2.500583e-15 1.313237e-09 3.321950e-01
+    ## [6] 1.617580e-04 2.325013e-20 5.643224e-01
 
-The third tibble shows the beta coefficients for each gene-level multiple linear regression.
+We can also show the posterior probability for each pattern.
 
 ``` r
-iprofun_result$Beta
+head(iprofun_result$x_1_iProFun_gene_posterior_probability)
 ```
 
-    ## # A tibble: 1,779 x 9
-    ##    Gene_ID estimate_cnv_rna estimate_cnv_pr… estimate_cnv_ph… Hybridization
-    ##    <chr>              <dbl>            <dbl>            <dbl> <chr>        
-    ##  1 AAAS               2.15             2.01             0.765 <NA>         
-    ##  2 ABCC1              1.31             1.21             0.492 <NA>         
-    ##  3 ABI1               1.71             1.96            -0.295 <NA>         
-    ##  4 ABI2               2.30             2.07             1.08  <NA>         
-    ##  5 ABLIM1             1.18             1.46             1.60  <NA>         
-    ##  6 ACLY               1.14             0.702            0.705 <NA>         
-    ##  7 ACTL6A             1.61             1.57             0.742 <NA>         
-    ##  8 ACTR2              1.32             1.36            -0.207 <NA>         
-    ##  9 ADAM17             1.41             1.68            -0.784 <NA>         
-    ## 10 ADD2               0.954            0.776           -0.767 <NA>         
-    ## # ... with 1,769 more rows, and 4 more variables: X <chr>,
-    ## #   estimate_methy_rna <dbl>, estimate_methy_protein <dbl>,
-    ## #   estimate_methy_phospho <dbl>
+    ##       V1                   V2                   V3                   V4
+    ## 1   AAAS 3.98651972763526e-47   0.0135167064625158 1.19589573270473e-58
+    ## 2  ABCC1 2.86930837780733e-24 0.000145235497054389 1.28165875484421e-33
+    ## 3   ABI1 1.65018230521891e-41  0.00582999259722584 2.16520084197717e-52
+    ## 4   ABI2  1.7328182967301e-64 4.49105874050004e-06 7.40324635278225e-73
+    ## 5 ABLIM1 4.36745372679193e-31 3.04920204275533e-07 8.89871350325967e-40
+    ## 6   ACLY 1.65097499266829e-26  0.00737357961529641 8.16791423742635e-38
+    ##                     V5                  V6                   V7
+    ## 1 6.46603320228941e-54   0.329178926717965 3.82042925110791e-05
+    ## 2 2.09422217933432e-31   0.526659231730965 1.84720701895405e-07
+    ## 3 8.05497699145462e-49   0.621006303511799 4.95904041815281e-06
+    ## 4  7.6289954142909e-71    0.15576850636726 3.44556407497044e-08
+    ## 5  6.9987433104478e-36 0.00504367226101182 8.51481509625661e-08
+    ## 6 3.15395853809779e-33   0.296149355355857 2.45465875285334e-05
+    ##                     V8                V9
+    ## 1  2.1830678128178e-63 0.657266162527008
+    ## 2 1.05280474672465e-38 0.473195348051279
+    ## 3 1.18948909020678e-57 0.373158744850557
+    ## 4 3.66831336139173e-77 0.844226968118359
+    ## 5 1.60490331945608e-42 0.994955937670633
+    ## 6 1.75612955219011e-42 0.696452518441318
+
+The last several elements in the list show the beta coefficients for each gene-level multiple linear regression.
+
+``` r
+head(iprofun_result$x_1_iProFun_gene_beta)
+```
+
+    ##       V1        1         2          3
+    ## 1   AAAS 2.152949 0.7862445  0.7646263
+    ## 2  ABCC1 1.314813 1.0466323  0.4915840
+    ## 3   ABI1 1.709761 0.8168414 -0.2947058
+    ## 4   ABI2 2.303057 1.4524548  1.0769021
+    ## 5 ABLIM1 1.180402 1.0120973  1.5958646
+    ## 6   ACLY 1.143833 0.5185449  0.7304007
 
 To control false discovery rate for the result, we can use `iProFun_permutate`. To save time, I will set number of permutation to 1. In our paper, we permutate 100 times to control the empirical FDR.
 
 ``` r
 iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho), xlist = list(cna, methy),
   covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
-  pi = rep(0.05, 3), permutate_number = 1)
+  pi = rep(0.05, 3), permutate_number = 1, thresholds =c(0.05,0.99,0.01), fdr = 0.1, filter = c(1,0))
 ```
 
     ## [1] "Finish Seed 1"
 
-The result of the function contains a list with three tibbles. The first tibble shows the cutoff values for each group based on permutation.
+The result of the function contains a list with the following components. The first component shows the cutoff values for each group based on permutation.
 
 ``` r
-iprofun_permutate_result$`Posterior Probability Cutoff`
+iprofun_permutate_result$cutoff
 ```
 
-    ## # A tibble: 6 x 2
-    ##   Group         `Cut Off probability`
-    ##   <chr>                         <dbl>
-    ## 1 CNV RNA                        0.75
-    ## 2 CNV Protein                    0.75
-    ## 3 CNV Phospho                    0.75
-    ## 4 Methy RNA                      0.75
-    ## 5 Methy Protein                  0.75
-    ## 6 Methy Phospho                  0.75
+    ##     cutoff_names cutoff
+    ## 1 x_1_y_1_cutoff   0.99
+    ## 2 x_1_y_2_cutoff   0.05
+    ## 3 x_2_y_1_cutoff   0.99
+    ## 4 x_2_y_2_cutoff   0.05
+    ## 5 x_3_y_1_cutoff   0.99
+    ## 6 x_3_y_2_cutoff   0.05
 
-The second tibble shows whether a gene is identified by iProFun or not with the FDR crteria we set.
+The following components show the genes names that are identified by iProFun with the FDR crteria we set in each group.
 
 ``` r
-iprofun_permutate_result$`iProFun Result`
+iprofun_permutate_result$x_2_y_2
 ```
 
-    ## # A tibble: 676 x 7
-    ##    Gene  `CNV RNA` `Methy RNA` `Methy Protein` `CNV Protein`
-    ##    <chr>     <dbl>       <dbl>           <dbl>         <dbl>
-    ##  1 AAAS          1           0               0             1
-    ##  2 ABCC1         1           0               0             1
-    ##  3 ABI2          1           0               0             1
-    ##  4 ABLI…         1           0               0             1
-    ##  5 ACLY          1           0               0             1
-    ##  6 ACTL…         1           0               0             1
-    ##  7 ADD3          1           0               0             1
-    ##  8 ADNP          1           0               0             1
-    ##  9 AHNAK         1           0               0             1
-    ## 10 AKAP1         1           0               0             1
-    ## # ... with 666 more rows, and 2 more variables: `Methy Phospho` <dbl>,
-    ## #   `CNV Phospho` <dbl>
-
-The third tibble shows add the direction of the assocation to the second tibble.
-
-``` r
-iprofun_permutate_result$`iProFun Result (Negative/Positive)`
-```
-
-    ## # A tibble: 676 x 7
-    ##    Gene  `CNV RNA` `Methy RNA` `Methy Protein` `CNV Protein`
-    ##    <chr>     <dbl>       <dbl>           <dbl>         <dbl>
-    ##  1 AAAS          1           0               0             1
-    ##  2 ABCC1         1           0               0             1
-    ##  3 ABI2          1           0               0             1
-    ##  4 ABLI…         1           0               0             1
-    ##  5 ACLY          1           0               0             1
-    ##  6 ACTL…         1           0               0             1
-    ##  7 ADD3          1           0               0             1
-    ##  8 ADNP          1           0               0             1
-    ##  9 AHNAK         1           0               0             1
-    ## 10 AKAP1         1           0               0             1
-    ## # ... with 666 more rows, and 2 more variables: `Methy Phospho` <dbl>,
-    ## #   `CNV Phospho` <dbl>
+    ## [1] "AP3D1"  "DNAJB6"
 
 ### Contributions
 

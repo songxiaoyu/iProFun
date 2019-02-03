@@ -21,7 +21,7 @@
 #' @param posterior Minimal Posterior Probabilty Cutoff, default as 0.75
 #' @param filter is a vector with the same length of ylist, taking values of 1, -1, 0 or NULL. "1"
 #' indicates filter in all positive results across multi-omic platforms. XXXX .... Jiayi!!!!
-#' @param thresholds xxx Jiayi
+#' @param thresholds p values thresholds
 #' @param seed Jiayi
 #' @return list with 3 components
 #' \item{Posterior Probability Cutoff:}{the cutoff values for each group based on permutation}
@@ -32,7 +32,7 @@
 #' @examples
 #' iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, posterior = 0.75, filter <- c(1,0))
 iProFun_permutate = function(ylist, xlist, covariates,
-                             pi = rep(0.05, 3), permutate_number = 10, fdr = 0.1, thresholds = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001))){
+                             pi = rep(0.05, 3), permutate_number = 10, fdr = 0.1, thresholds = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001)), filter = NULL){
                              # ,filter = NULL, seed=?.Random.seed
 
   iprofun_result = iProFun(ylist = ylist, xlist = xlist, covariates = covariates, pi=pi, permutate = 0 )
@@ -200,7 +200,7 @@ iProFun_permutate = function(ylist, xlist, covariates,
              )))[[paste0("x_", k, "_iProFun_gene_posterior_probability_only")]][, Q[, j] == 1], 1, sum) > eval(parse(text = paste0("x_", k, "_iprofun_", j, "_cutoff"))), 1])
     }
   }
-
+  group <- NULL
   for (i in 1: dim(Q)[1]){
     group = c(group, paste(Q[i,], collapse = ""))
   }
