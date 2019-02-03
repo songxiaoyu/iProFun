@@ -30,32 +30,32 @@
 #' @export iProFun_permutate
 #'
 #' @examples
-#' iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, posterior = 0.75)
+#' iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, posterior = 0.75, filter <- c(1,0))
 iProFun_permutate = function(ylist, xlist, covariates,
                              pi = rep(0.05, 3), permutate_number = 10, fdr = 0.1, thresholds = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001))){
                              # ,filter = NULL, seed=?.Random.seed
 
   iprofun_result = iProFun(ylist = ylist, xlist = xlist, covariates = covariates, pi=pi, permutate = 0 )
 
-  # need to add check function for filter function here
+  # need to add check function for filter function here (length of vectors equals to the length of xlist)
 
   for (i in 1: length(xlist)){
-    if (filter[i] == 1){
-      assign(paste0("x_", i, "_filter_gene"), iprofun_result[[paste0("x_", i, "_xName")]][apply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]][,sapply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]],is.numeric)], 1, function(x) all(x > 0)),])
+    if (filter[i] == 1){ # all positive
+      assign(paste0("x_", i, "_filter_gene"), iprofun_result[[paste0("x_", i, "_xName")]][,1,drop = F][apply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]][,sapply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]],is.numeric)], 1, function(x) all(x > 0)),])
     }
 
-    if (filter[i] == -1){
-      assign(paste0("x_", i, "_filter_gene"), iprofun_result[[paste0("x_", i, "_xName")]][apply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]][,sapply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]],is.numeric)], 1, function(x) all(x < 0)),])
+    if (filter[i] == -1){  # all negative
+      assign(paste0("x_", i, "_filter_gene"), iprofun_result[[paste0("x_", i, "_xName")]][,1,drop = F][apply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]][,sapply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]],is.numeric)], 1, function(x) all(x < 0)),])
     }
 
-    if (filter[i] == 0){
-      assign(paste0("x_", i, "_filter_gene"), c(iprofun_result[[paste0("x_", i, "_xName")]][apply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]][,sapply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]],is.numeric)], 1, function(x) all(x > 0)),], iprofun_result[[paste0("x_", i, "_xName")]][apply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]][,sapply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]],is.numeric)], 1, function(x) all(x < 0)),]))
+    if (filter[i] == 0){ # all positive or all negative
+      assign(paste0("x_", i, "_filter_gene"), c(iprofun_result[[paste0("x_", i, "_xName")]][,1,drop = F][apply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]][,sapply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]],is.numeric)], 1, function(x) all(x > 0)),], iprofun_result[[paste0("x_", i, "_xName")]][,1,drop = F][apply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]][,sapply(iprofun_result[[paste0("x_", i, "_iProFun_gene_beta")]],is.numeric)], 1, function(x) all(x < 0)),]))
     }
-    if (is.null(filter[i]) ){
-      assign(paste0("x_", i, "_filter_gene"), iprofun_result[[paste0("x_", i, "_xName")]])
+    if (is.null(filter[i]) ){ # no requirement
+      assign(paste0("x_", i, "_filter_gene"), iprofun_result[[paste0("x_", i, "_xName")]][,1,drop = F])
     }
   }
-
+  # define the vectors to put the results
   for (j in 1:length(ylist)) {
     for (k in 1:length(xlist)) {
       for (p in 1:length(permutate_number)) {
@@ -67,7 +67,7 @@ iProFun_permutate = function(ylist, xlist, covariates,
     }
   }
 
-  Q = makeQ(1:ylength)
+  Q = makeQ(1:length(ylist))
 
   for (j in 1:length(ylist)) {
     for (k in 1:length(xlist)) {
@@ -76,15 +76,16 @@ iProFun_permutate = function(ylist, xlist, covariates,
 
     }
   }
-  # The following codes run the permutation "permutate_number" of times (each permutaion consist of "length(ylist)" times of sub-permutation)
+  # The following codes run the the whole permutation "permutate_number" of times (each permutaion consist of "length(ylist)" times of sub-permutation)
   for (i in 1 : permutate_number) {
     # set.seed(seed)
+    # In each permutation we run "length(ylist)" times of sub-permutation
     set.seed(i)
     for (j in 1:length(ylist)){
       assign(paste0("iprofun_perm_", j), iProFun(ylist = ylist, xlist = xlist, covariates = covariates, permutate = j))
     }
 
-
+    # define the vectors to put the results
     for (j in 1:length(ylist)) {
       for (k in 1:length(xlist)) {
           assign(paste0("x_", k, "_iprofun_perm_", j, "_count"),
@@ -95,7 +96,7 @@ iProFun_permutate = function(ylist, xlist, covariates,
                  NULL)
         }
     }
-
+    # define the vectors to put the results at the threshold level
     for (j in 1:length(ylist)) {
       for (k in 1:length(xlist)) {
         for (p in 1:length(thresholds)) {
@@ -106,22 +107,22 @@ iProFun_permutate = function(ylist, xlist, covariates,
         }
       }
     }
-
+    # calculate the number of genes significant at each threshold level
     for (j in 1:length(ylist)) {
       for (k in 1:length(xlist)) {
         for (p in 1:length(thresholds)) {
           assign(paste0("x_", k, "_iprofun_perm_", j, "_count_", p, "_thresholds"),
-                 dim(iprofun_result[[paste0("x_", k, "_xName")]][apply(eval(parse(text = paste0(
+                 sum(iprofun_result[[paste0("x_", k, "_xName")]][apply(eval(parse(text = paste0(
                    "iprofun_perm_", j
                  )))[[paste0("x_", k, "_iProFun_gene_posterior_probability_only")]][, Q[, j] ==
-                                                                                      1], 1, sum) > thresholds[p], , drop = F])[1])
+                                                                                      1], 1, sum) > thresholds[p], , drop = F][,1] %in% eval(parse(text = paste0("x_",k, "_filter_gene")))))
           assign(paste0("x_", k, "_iprofun_perm_", j, "_original_", p, "_thresholds"),
-                 dim(iprofun_result[[paste0("x_", k, "_xName")]][apply(iprofun_result[[paste0("x_", k, "_iProFun_gene_posterior_probability_only")]][, Q[, j] ==
-                                                                                                                                                       1], 1, sum) > thresholds[p], , drop = F])[1])
+                 sum(iprofun_result[[paste0("x_", k, "_xName")]][apply(iprofun_result[[paste0("x_", k, "_iProFun_gene_posterior_probability_only")]][, Q[, j] ==
+                                                                                                                                                       1], 1, sum) > thresholds[p], , drop = F][,1] %in% eval(parse(text = paste0("x_",k, "_filter_gene")))))
         }
       }
     }
-    # The following codes paste the numbers into a vector
+    # paste the numbers at threshold level into a vector
     for (j in 1:length(ylist)) {
       for (k in 1:length(xlist)) {
         for (p in 1:length(thresholds)) {
@@ -141,14 +142,13 @@ iProFun_permutate = function(ylist, xlist, covariates,
         }
       }
     }
-    # The following codes calculte the empirical FDR
+    # calculte the empirical FDR at each threshold (vectorized division)
     for (j in 1:length(ylist)) {
       for (k in 1:length(xlist)) {
         assign(paste0("x_", k, "_iprofun_perm_", j, "_fdr_", i, "_permutate"),
                eval(parse(text = paste0("x_", k, "_iprofun_perm_", j, "_count")))/eval(parse(text = paste0("x_", k, "_iprofun_perm_", j, "_original"))))
       }
     }
-    # result[[i]] <- MR1
     print(paste("Finish Seed", i))
   }
 
