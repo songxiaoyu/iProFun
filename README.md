@@ -20,7 +20,7 @@ You can install the latest version directly from GitHub with [devtools](https://
 
 ``` r
 install.packages("devtools")
-devtools::install_github("songxiaoyu/iProFun")
+devtools::install_github("songxiaoyu/Rpackage/iProFun")
 ```
 
 <!-- * the most recent officially-released version from CRAN with -->
