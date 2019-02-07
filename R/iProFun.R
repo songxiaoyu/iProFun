@@ -66,7 +66,7 @@
 #' @import metRology
 #' @importFrom matrixStats rowMins
 #' @examples
-#' iprofun_result <- iprofun(ylist = list(rna, protein, phospho),
+#' iprofun_result <- iProFun(ylist = list(rna, protein, phospho),
 #' xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3))
 
 iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
@@ -115,7 +115,7 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
 
   # Create Gene ID
   if (is.null(x.ID)  & is.null(y.ID) & is.null(ID)) {
-    print("No IDs are specified. The first column of each data type in ylist and xlist are used as gene/protein/peptide/etc. ID.")
+    print("No IDs are specified. The first column of each data type in ylist and xlist are used.")
 
     Gene_ID_y=lapply(ylist, function(f) f[,1])
     Gene_ID_x=lapply(xlist, function(f) f[,1])
@@ -134,14 +134,14 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
   xyCommonGeneID=Reduce(intersect, append(Gene_ID_x, Gene_ID_y))
 
   # print parameters
-  print(paste0("A total of ", length(xyCommonGeneID), " genes/proteins/peptides/etc. are considered for iProFun integrative analysis."))
+  print(paste0("A total of ", length(xyCommonGeneID), " genes/proteins/peptides/etc. are considered."))
   if (length(xyCommonGeneID)<100) warning("Less than 100 genes/proteins/peptides/etc. are considered; the density estimation may not be robust.")
-  print(paste0("A total of ", sapply(xyzCommonSubID, length), " samples are considered for Y", seq(1:ylength)," data type."))
+  print(paste0("A total of ", sapply(xyzCommonSubID, length), " samples for Y", seq(1:ylength)," data type."))
 
 
   # A code for permutation
   if (permutate > 0 & permutate<=ylength) {  xyzCommonSubID_permutate <- lapply(xyzCommonSubID, sample)}
-  if (permuate<0 | permutate>ylength) stop("Permutation index can not be out of the range of ylist.")
+  if (permutate<0 | permutate>ylength) stop("Permutation index can not be out of the range of ylist.")
   # colum.to.keep = ID or c(ID, "Phospho_ID") from X or Y in output
 
 
@@ -243,10 +243,10 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
 }
 
   # ------- iProFun with regression results  ------------------------------------------------------------------
+  print("Run iProFun")
   Reg_output <- vector("list", xlength);
-  final_result <- vector(mode="list", xlength)
-
   x_iProFun <- vector("list", xlength);
+  final_result <- vector(mode="list", xlength)
   for (p in 1:xlength) {
     # Summarize Regression
     Reg_output[[p]]= list(betas_J=betas_J[[p]], betas_se_J=betas_se_J[[p]], sigma2_J=sigma2_J[[p]],dfs_J=dfs_J[[p]], v_g_J = v_g_J[[p]], xName_J = xName_J[[p]], yName_J = yName_J[[p]])
@@ -255,9 +255,10 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
     x_iProFun[[p]]= MultiOmics_Input(Reg_output[[p]],pi1 = pi)
 
     # Summarize output
-    names(final_result[[p]]) <- paste0("iProFun output for predictor ", p)
+    names(final_result)[p] <- paste0("iProFun output for predictor ", p)
     final_result[[p]] <- vector(mode="list", length=6)
     final_result[[p]] = append(Reg_output[[p]], x_iProFun[[p]])
   }
+  print("Completed")
   return(final_result)
 }
