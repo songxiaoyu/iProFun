@@ -1,11 +1,11 @@
-MultiOmics_Input <- function(input, pi1=c(0.0001, 0.0001, 0.0001), cl=NULL, tol=1e-3){
+MultiOmics_Input <- function(input, pi1=c(0.05, 0.05, 0.05), cl=NULL, tol=1e-3){
   betas_J=input$betas_J
   dfs_J=input$dfs_J
   betas_se_J=input$betas_se_J
   sigma2_J=input$sigma2_J
   v_g_J=input$v_g_J
-  xName=input$xName
-  yName=input$yName
+  xName=input$xName_J
+  yName=input$yName_J
   ylength=ncol(betas_J)
   platform = input$name
 
@@ -44,10 +44,5 @@ MultiOmics_Input <- function(input, pi1=c(0.0001, 0.0001, 0.0001), cl=NULL, tol=
     # print(c(numiters,diff, curpi))
   }
 
-  betas_J=cbind(xName, yName, betas_J)
-  betas_se_J=cbind(xName, yName, betas_se_J)
-  raw_prob = curb
-  curb=cbind( xName, curb) ### with name here
-
-  return(list(NoComputation=dim(betas_J)[1], Config=Q, PostProb = curb, colocProb = curpi, Tstat_L = Tstat_L, D0=D0, D1=D1, raw_postprob = raw_prob, xname = xName, yName = yName))
+  return(list(NoComputation=dim(betas_J)[1], Config=Q, PostProb = curb, colocProb = curpi, Tstat_L = Tstat_L, D0=D0, D1=D1))
 }
