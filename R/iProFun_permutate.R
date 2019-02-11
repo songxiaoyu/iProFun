@@ -40,21 +40,31 @@
 #' @examples
 #' iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho),
 #' xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
-#' pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, posterior = 0.75, filter <- c(1,0))
+#' pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, PostCut = 0.75, filter <- c(1,0)),
+#' grids = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001)),
+#' seed=123
 iProFun_permutate = function(ylist, xlist, covariates,
                              pi = rep(0.05, 3), permutate_number = 10, fdr = 0.1, PostCut=0.75,
                              grids = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001)),
-                             filter = NULL, seed=NULL){
+                             filter = NULL, seed=NULL,
+                             ID=NULL, x.ID=NULL, y.ID=NULL,  sub.ID.common="TCGA",
+                             colum.to.keep=c("phospho_ID", "Hybridization", "chr"),
+                             missing.rate.filter=NULL){
+  xlength=length(xlist)
+  ylength=length(ylist)
 
+  # Obtain posterior probabiliy from original data
+  iprofun_result = iProFun(ylist = ylist, xlist = xlist, covariates = covariates,
+                           pi=pi, permutate = 0, ID=ID, x.ID=x.ID, y.ID=y.ID, sub.ID.common = sub.ID.common,
+                           colum.to.keep=colum.to.keep, missing.rate.filter=missing.rate.filter)
+  post_original=vector("list", xlength)
+  for (k in 1:xlength) {post_original[[k]]=iprofun_result[[k]]$PostProb}
 
-  iprofun_result = iProFun(ylist = ylist, xlist = xlist, covariates = covariates, pi=pi, permutate = 0 )
+  # filter genes
 
-  # need to add check function for filter function here (length of vectors equals to the length of xlist)
   x_filter_gene=vector("list", xlength)
-  for (i in 1: length(xlist)){
-
+  for (i in 1: xlength){
     x_filter_gene[[i]]= iprofun_result[[i]]$xName_J[,1,drop = F][apply(iprofun_result[[i]]$betas_J, 1, function(x) all(x > 0)),]
-
     if (filter[i] == 1){ # all positive
       x_filter_gene[[i]]= iprofun_result[[i]]$xName_J[,1,drop = F][apply(iprofun_result[[i]]$betas_J, 1, function(x) all(x > 0)),]
     }
@@ -71,71 +81,74 @@ iProFun_permutate = function(ylist, xlist, covariates,
     }
   }
 
-
   # define the vectors to put the results
-  for (j in 1:length(ylist)) {
-    for (k in 1:length(xlist)) {
-      for (p in 1:length(permutate_number)) {
-        assign(
-          paste0("x_", k, "_perm_outcome_", j, "_num_", p, "_permutate"),
-          vector("numeric", length(grids))
-        )
-      }
-    }
-  }
+      count_perm_grid=vector("list", xlength);
+     for (k in 1:xlength) {
+         count_perm_grid[[k]]=vector("list", ylength)
+     }
 
-  Q = makeQ(1:length(ylist))
 
-  for (j in 1:length(ylist)) {
-    for (k in 1:length(xlist)) {
-      assign(paste0("x_", k, "_perm_outcome_", j, "_fdr"),
-             NULL)
-
-    }
-  }
+#   for (j in 1:ylength) {
+#     for (k in 1:xlength) {
+#       for (p in 1:permutate_number) {
+#         assign(
+#           paste0("x_", k, "_perm_outcome_", j, "_num_", p, "_permutate"),
+#           vector("numeric", length(grids))
+#         )
+#       }
+#     }
+#   }
+#
+   Q = makeQ(1:ylength)
+#
+#   for (j in 1:ylength) {
+#     for (k in 1:xlength) {
+#       assign(paste0("x_", k, "_perm_outcome_", j, "_fdr"),
+#              NULL)
+#     }
+#   }
   # The following codes run the the whole permutation "permutate_number" of times (each permutaion consist of "length(ylist)" times of sub-permutation)
   for (i in 1 : permutate_number) {
-    set.seed(seed)
-    for (j in 1:length(ylist)){
-      assign(paste0("perm_outcome_", j), iProFun(ylist = ylist, xlist = xlist, covariates = covariates, permutate = j))
+
+    set.seed(seed+i)
+    post_perm=vector("list", xlength); for (k in 1:xlength) {post_perm[[k]]=vector("list", ylength)}
+    for (j in 1:ylength){
+      iprofun_perm = iProFun(ylist = ylist, xlist = xlist,
+                                                 covariates = covariates, permutate = j,
+                                                 pi=pi, ID=ID, x.ID=x.ID, y.ID=y.ID,
+                                                 sub.ID.common = sub.ID.common,
+                                                 colum.to.keep=colum.to.keep,
+                                                 missing.rate.filter=missing.rate.filter)
+      for (k in 1:xlength) {post_perm[[k]][[j]]=iprofun_perm[[k]]$PostProb}
     }
 
-    # define the vectors to put the results
+
+    # calculate the number of genes significant at each threshold level
+
+
     for (j in 1:length(ylist)) {
       for (k in 1:length(xlist)) {
-          assign(paste0("x_", k, "_perm_outcome_", j, "_count"),
-                 NULL)
-          assign(paste0("x_", k, "_perm_outcome_", j, "_original"),
-                 NULL)
-          assign(paste0("x_", k, "_perm_outcome_", j, "_fdr"),
-                 NULL)
-        }
-    }
-    # define the vectors to put the results at the threshold level
-    for (j in 1:length(ylist)) {
-      for (k in 1:length(xlist)) {
+        temp=NULL
         for (p in 1:length(grids)) {
-          assign(paste0("x_", k, "_perm_outcome_", j, "_count_", p, "_grids"),
-                 vector("numeric", length(grids)))
-          assign(paste0("x_", k, "_perm_outcome_", j, "_original_", p, "_grids"),
-                 vector("numeric", length(grids)))
+        temp=c(temp, sum(apply(post_perm[[k]][[j]][, Q[, j] ==1],1,sum)>grids[p]))
+        count_perm_grid[[k]][[j]]=rbind(count_perm_grid[[k]][[j]], temp)
         }
       }
     }
-    # STOPPED HERE!!
 
-    # calculate the number of genes significant at each threshold level
-    for (j in 1:length(ylist)) {
-      for (k in 1:length(xlist)) {
+
         for (p in 1:length(grids)) {
-          assign(paste0("x_", k, "_iprofun_perm_", j, "_count_", p, "_grids"),
-                 sum(iprofun_result[[paste0("x_", k, "_xName")]][apply(eval(parse(text = paste0(
-                   "iprofun_perm_", j
-                 )))[[paste0("x_", k, "_iProFun_gene_posterior_probability_only")]][, Q[, j] ==
-                                                                                      1], 1, sum) > grids[p], , drop = F][,1] %in% eval(parse(text = paste0("x_",k, "_filter_gene")))))
-          assign(paste0("x_", k, "_iprofun_perm_", j, "_original_", p, "_grids"),
-                 sum(iprofun_result[[paste0("x_", k, "_xName")]][apply(iprofun_result[[paste0("x_", k, "_iProFun_gene_posterior_probability_only")]][, Q[, j] ==
-                                                                                                                                                       1], 1, sum) > grids[p], , drop = F][,1] %in% eval(parse(text = paste0("x_",k, "_filter_gene")))))
+
+                 sum(iprofun_result[[k]]$xName_J
+                     [apply(eval(parse(text = paste0("perm_outcome_", j )))
+                            [[k]]$PostProb[, Q[, j] ==1], 1, sum) > grids[p],1] %in%
+                   x_filter_gene[[k]] ) )
+
+          assign(paste0("x_", k, "_perm_outcome_", j, "_original_", p, "_grids"),
+                 sum(iprofun_result[[k]]$xName_J
+                     [apply(iprofun_result[[k]]$PostProb
+                            [, Q[, j] ==1], 1, sum) > grids[p],1] %in%
+                       x_filter_gene[[k]] ))
         }
       }
     }
@@ -143,31 +156,33 @@ iProFun_permutate = function(ylist, xlist, covariates,
     for (j in 1:length(ylist)) {
       for (k in 1:length(xlist)) {
         for (p in 1:length(grids)) {
-          assign(paste0("x_", k, "_iprofun_perm_", j, "_count"),
+          assign(paste0("x_", k, "_perm_outcome_", j, "_count"),
                  c(eval(parse(
-                   text = paste0("x_", k, "_iprofun_perm_", j, "_count")
+                   text = paste0("x_", k, "_perm_outcome_", j, "_count")
                  )), eval(parse(
-                   text = paste0("x_", k, "_iprofun_perm_", j, "_count_", p, "_grids")
+                   text = paste0("x_", k, "_perm_outcome_", j, "_count_", p, "_grids")
                  ))))
 
-          assign(paste0("x_", k, "_iprofun_perm_", j, "_original"),
+          assign(paste0("x_", k, "_perm_outcome_", j, "_original"),
                  c(eval(parse(
-                   text = paste0("x_", k, "_iprofun_perm_", j, "_original")
+                   text = paste0("x_", k, "_perm_outcome_", j, "_original")
                  )), eval(parse(
-                   text = paste0("x_", k, "_iprofun_perm_", j, "_original_", p, "_grids")
+                   text = paste0("x_", k, "_perm_outcome_", j, "_original_", p, "_grids")
                  ))))
         }
       }
     }
     # calculte the empirical FDR at each threshold (vectorized division)
-    for (j in 1:length(ylist)) {
-      for (k in 1:length(xlist)) {
-        assign(paste0("x_", k, "_iprofun_perm_", j, "_fdr_", i, "_permutate"),
-               eval(parse(text = paste0("x_", k, "_iprofun_perm_", j, "_count")))/eval(parse(text = paste0("x_", k, "_iprofun_perm_", j, "_original"))))
+    for (j in 1:ylength) {
+      for (k in 1:xlength) {
+        assign(paste0("x_", k, "_perm_outcome_", j, "_fdr_", i, "_permutate"),
+               eval(parse(text = paste0("x_", k, "_perm_outcome_", j, "_count")))
+               /eval(parse(text = paste0("x_", k, "_perm_outcome_", j, "_original"))))
       }
     }
-    print(paste("Finish Seed", i))
+    print(paste("Finish permutation", i))
   }
+
 
   for (j in 1:length(ylist)) {
     for (k in 1:length(xlist)) {
@@ -184,34 +199,34 @@ iProFun_permutate = function(ylist, xlist, covariates,
 
   for (j in 1:length(ylist)) {
     for (k in 1:length(xlist)) {
-      assign(paste0("x_", k, "_iprofun_perm_", j, "_fdr_overall"),
+      assign(paste0("x_", k, "_perm_outcome_", j, "_fdr_overall"),
              apply(eval(parse(
-               text = paste0("x_", k, "_iprofun_perm_", j, "_fdr")
+               text = paste0("x_", k, "_perm_outcome_", j, "_fdr")
              )), 1, mean, na.rm = T))
     }
   }
 
   for (j in 1:length(ylist)) {
     for (k in 1:length(xlist)) {
-      assign(paste0("x_", k, "_iprofun_", j, "_cutoff"),
+      assign(paste0("x_", k, "_outcome_", j, "_cutoff"),
              grids[min(which(eval(parse(
-               text = paste0("x_", k, "_iprofun_perm_", j, "_fdr_overall")
+               text = paste0("x_", k, "_perm_outcome_", j, "_fdr_overall")
              )) < fdr))])
     }
   }
 
   for (j in 1:length(ylist)) {
     for (k in 1:length(xlist)) {
-      assign(paste0("x_", k, "_iprofun_", j, "_cutoff"),
+      assign(paste0("x_", k, "_outcome_", j, "_cutoff"),
              grids[min(which(eval(parse(
-               text = paste0("x_", k, "_iprofun_perm_", j, "_fdr_overall")
+               text = paste0("x_", k, "_perm_outcome_", j, "_fdr_overall")
              )) < fdr))])
     }
   }
 
   for (j in 1:length(ylist)) {
     for (k in 1:length(xlist)) {
-      assign(paste0("gene_x_", k, "_iprofun_", j),
+      assign(paste0("gene_x_", k, "_outcome_", j),
              iprofun_result[[paste0("x_", k, "_xName")]][apply(eval(parse(text = paste0(
                "iprofun_perm_", j
              )))[[paste0("x_", k, "_iProFun_gene_posterior_probability_only")]][, Q[, j] == 1], 1, sum) > eval(parse(text = paste0("x_", k, "_iprofun_", j, "_cutoff"))), 1])
