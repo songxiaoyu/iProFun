@@ -7,7 +7,7 @@
 iProFun(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
   ID = NULL, x.ID = NULL, y.ID = NULL, sub.ID.common = "TCGA",
   colum.to.keep = c("phospho_ID", "Hybridization", "chr"),
-  missing.rate.filter = NULL)
+  missing.rate.filter = NULL, verbose = T)
 }
 \arguments{
 \item{ylist}{ylist is a list of data matrix. Each matrix is a data type or platform that
@@ -60,6 +60,8 @@ final results. Often helpful if multiple rows (e.g. probes) are considered per I
 
 \item{missing.rate.filter}{missing.rate.filter allows filtering out variables with high missing
 rate in data.}
+
+\item{verbose}{verbose=T print out the progress of iProFun analysis.}
 }
 \value{
 list with the same length as xlist. Nested within each list, it contains

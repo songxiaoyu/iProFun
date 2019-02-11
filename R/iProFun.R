@@ -40,6 +40,7 @@
 #' (e.g. gene) to allow clear specification of each result.
 #' @param missing.rate.filter missing.rate.filter allows filtering out variables with high missing
 #' rate in data.
+#' @param verbose verbose=T print out the progress of iProFun analysis.
 #'
 #' @return list with the same length as xlist. Nested within each list, it contains
 #' \item{betas_J:}{Coefficient estimate for predictor on each outcome}
@@ -71,7 +72,7 @@
 
 iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
                     ID=NULL, x.ID=NULL, y.ID=NULL,  sub.ID.common="TCGA", colum.to.keep=c("phospho_ID", "Hybridization", "chr"),
-                    missing.rate.filter=NULL){
+                    missing.rate.filter=NULL, verbose=T){
   # ----- Data cleaning and quality check ----- #
   # Check xlist, ylist and covariates data types
   ylength=length(ylist)
@@ -115,7 +116,7 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
 
   # Create Gene ID
   if (is.null(x.ID)  & is.null(y.ID) & is.null(ID)) {
-    print("No IDs are specified. The first column of each data type in ylist and xlist are used.")
+    if (verbose==T) {print("No IDs are specified. The first column of each data type in ylist and xlist are used.")}
 
     Gene_ID_y=lapply(ylist, function(f) f[,1])
     Gene_ID_x=lapply(xlist, function(f) f[,1])
@@ -134,9 +135,9 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
   xyCommonGeneID=Reduce(intersect, append(Gene_ID_x, Gene_ID_y))
 
   # print parameters
-  print(paste0("A total of ", length(xyCommonGeneID), " genes/proteins/peptides/etc. are considered."))
+  if (verbose==T) {print(paste0("A total of ", length(xyCommonGeneID), " genes/proteins/peptides/etc. are considered."))}
   if (length(xyCommonGeneID)<100) warning("Less than 100 genes/proteins/peptides/etc. are considered; the density estimation may not be robust.")
-  print(paste0("A total of ", sapply(xyzCommonSubID, length), " samples for Y", seq(1:ylength)," data type."))
+  if (verbose==T) {print(paste0("A total of ", sapply(xyzCommonSubID, length), " samples for Y", seq(1:ylength)," data type."))}
 
 
   # A code for permutation
@@ -152,7 +153,7 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
   dfs_J <- vector("list", xlength);   v_g_J <- vector("list", xlength);   xName_J <- vector("list", xlength);  yName_J <- vector("list", xlength)
 
   for ( j in 1: ylength) {
-    print(paste0("Obtaining regression summaries for data type ", j))
+    if (verbose==T) {print(paste0("Obtaining regression summaries for data type ", j))}
 
     betas=vector("list", xlength); betas_se=vector("list", xlength);
     sigma2=vector("list", xlength); dfs=vector("list", xlength); v_g=vector("list", xlength);
@@ -243,7 +244,7 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
 }
 
   # ------- iProFun with regression results  ------------------------------------------------------------------
-  print("Run iProFun")
+  if (verbose==T) {print("Run iProFun")}
   Reg_output <- vector("list", xlength);
   x_iProFun <- vector("list", xlength);
   final_result <- vector(mode="list", xlength)
@@ -259,6 +260,6 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
     final_result[[p]] <- vector(mode="list", length=6)
     final_result[[p]] = append(Reg_output[[p]], x_iProFun[[p]])
   }
-  print("Completed")
+  if (verbose==T) {print("Completed")}
   return(final_result)
 }

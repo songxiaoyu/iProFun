@@ -5,9 +5,12 @@
 \title{iProFun false discovery rate assessment based on permutations}
 \usage{
 iProFun_permutate(ylist, xlist, covariates, pi = rep(0.05, 3),
-  permutate_number = 10, fdr = 0.1, thresholds = c(seq(0.75, 0.99,
-  0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 1e-04)),
-  filter = NULL)
+  permutate_number = 2, fdr = 0.1, PostCut = 0.75,
+  grids = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991,
+  0.9999, 1e-04)), filter = NULL, seed = .Random.seed[1], ID = NULL,
+  x.ID = NULL, y.ID = NULL, sub.ID.common = "TCGA",
+  colum.to.keep = c("phospho_ID", "Hybridization", "chr"),
+  missing.rate.filter = NULL)
 }
 \arguments{
 \item{ylist}{ylist is a list of data matrix. Each matrix is a data type or platform that
@@ -32,26 +35,37 @@ a list of principle components.}
 
 \item{permutate_number}{Number of permutation, default 10}
 
-\item{fdr}{False Discover Rate, default as 0.1}
+\item{fdr}{false discover rate, default as 0.1}
 
-\item{thresholds}{p values thresholds}
+\item{PostCut}{PostCut specifies minimal posterior probabilty cutoff to be considered as
+significant, default as 0.75}
 
-\item{filter}{is a vector with the same length of ylist, taking values of 1, -1, 0 or NULL. "1"
-indicates filter in all positive results across multi-omic platforms. XXXX .... Jiayi!!!!}
+\item{grids}{grids specify the searching grids to find significant associations}
 
-\item{posterior}{Minimal Posterior Probabilty Cutoff, default as 0.75}
+\item{filter}{filter is a vector with the same length of xlist, taking values of 1, -1, 0 or NULL.
+"NULL" is default imposes no filtering. 1" indicates that an association is considered for
+significance only if in positive directions across all outcome platforms. "-1" indicates
+that an association is considered
+for significance only if in negative directions across all outcome platforms. "0" indicates
+that an association is considered for significance only if association across all outcome
+platforms preserve consistent directions (either positive or negative).}
 
-\item{seed}{Jiayi}
+\item{seed}{seed allows users to externally assign seed to replicate results.}
 }
 \value{
 list with 3 components
+\item{FDR by posterior probabilities}{FDR by posterior probabilities}
 \item{Posterior Probability Cutoff:}{the cutoff values for each group based on permutation}
-\item{iProFun Result:}{A table indicating whether a gene is identified by iProFun or not}
-\item{iProFun Result (Negative/Positive):}{A table indicating whether a gene is identified by iProFun or not and whether the association is positive or not}
+\item{No. of Identified Variables:}{the number of identified variables for each X and Y pair}
+\item{iProFun Identification:}{A table indicating whether a gene is identified by iProFun or not}
 }
 \description{
 iProFun false discovery rate assessment based on permutations
 }
 \examples{
-iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, posterior = 0.75, filter <- c(1,0))
+iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho),
+xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
+pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, PostCut = 0.75, filter <- c(1,0)),
+grids = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001)),
+seed=123)
 }
