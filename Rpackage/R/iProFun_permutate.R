@@ -31,20 +31,20 @@
 #' @param grids grids specify the searching grids to find significant associations
 #' @param seed seed allows users to externally assign seed to replicate results.
 #' @return list with 3 components
-#' \item{FDR by posterior probabilities}{FDR by posterior probabilities}
-#' \item{Posterior Probability Cutoff:}{the cutoff values for each group based on permutation}
+#' \item{FDR by posterior probability cutoffs}{FDR by posterior probability cutoffs considered in grids}
+#' \item{Posterior Probability Cutoff:}{the cutoff values for FDR for each X and Y pairs based on permutation}
 #' \item{No. of Identified Variables:}{the number of identified variables for each X and Y pair}
-#' \item{iProFun Identification:}{A table indicating whether a gene is identified by iProFun or not}
+#' \item{iProFun Identification:}{A table indicating whether a gene is significantly identified by iProFun or not}
 #' @export iProFun_permutate
 #'
 #' @examples
 #' iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho),
 #' xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
-#' pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, PostCut = 0.75, filter <- c(1,0)),
+#' pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, PostCut = 0.75, filter <- c(1,0),
 #' grids = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001)),
 #' seed=123)
-iProFun_permutate = function(ylist, xlist, covariates,
-                             pi = rep(0.05, 3), permutate_number = 2, fdr = 0.1, PostCut=0.75,
+iProFun_permutate = function(ylist, xlist, covariates, pi,
+                             permutate_number = 10, fdr = 0.1, PostCut=0.75,
                              grids = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001)),
                              filter = NULL, seed=.Random.seed[1],
                              ID=NULL, x.ID=NULL, y.ID=NULL,  sub.ID.common="TCGA",
@@ -84,8 +84,8 @@ iProFun_permutate = function(ylist, xlist, covariates,
 
   count_original_grid=vector("list", xlength); for (k in 1:xlength) {count_original_grid[[k]]=vector("list", ylength)}
 
-  for (k in 1:length(xlist)) {
-    for (j in 1:length(ylist)) {
+  for (k in 1:xlength) {
+    for (j in 1:ylength) {
       Post_filter=PostProb_original[[k]][x_filter_gene[[k]],]
       temp=NULL
       for (p in 1:length(grids)) {
@@ -122,9 +122,9 @@ iProFun_permutate = function(ylist, xlist, covariates,
     # calculate the number of genes significant at each threshold level
 
 
-    for (k in 1:length(xlist)) {
+    for (k in 1:xlength) {
 
-      for (j in 1:length(ylist)) {
+      for (j in 1:ylength) {
         Post_filter=PostProb_perm[[k]][[j]][x_filter_gene[[k]],]
         temp=NULL
         for (p in 1:length(grids)) {
@@ -142,13 +142,13 @@ iProFun_permutate = function(ylist, xlist, covariates,
  # calculate FDR based cutoff
     fdr_grid=vector("list", xlength);
 
-    for (k in 1:length(xlist)) {
-      for (j in 1:length(ylist)) {
+    for (k in 1:xlength) {
+      for (j in 1:ylength) {
         fdr_grid[[k]]=rbind(fdr_grid[[k]], apply( count_perm_grid[[k]][[j]], 2, mean, na.rm = T)/ count_original_grid[[k]][[j]])
 
         }
       colnames(fdr_grid[[k]])=paste0("Prob", grids)
-      rownames(fdr_grid[[k]]=paste0("Y", 1:ylength)
+      rownames(fdr_grid[[k]])=paste0("Y", 1:ylength)
     }
 
     fdr_cut=lapply(fdr_grid, function(f)
@@ -160,7 +160,7 @@ iProFun_permutate = function(ylist, xlist, covariates,
 
     Gene_fdr=vector("list", xlength);
     for (k in 1:length(xlist)) {
-      for (j in 1:length(ylist)) {
+      for (j in 1:ylength) {
         temp=rep(0, nrow(iprofun_result[[k]]$xName_J))
         sig=intersect(x_filter_gene[[k]], which(apply(PostProb_original[[k]][, Q[, j] ==1],1,sum)>fdr_cutPob[[k]][j]))
         temp[sig]=1

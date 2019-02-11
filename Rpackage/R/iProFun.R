@@ -99,7 +99,7 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
     zSubID=lapply(covariates, function(f) Reduce(setdiff, SubIDExclude, colnames(f)))
   }
   xCommonSubID=Reduce(intersect, xSubID)
-  yzCommonSubID=lapply(1:3, function(f) Reduce(intersect, list(ySubID[[f]], zSubID[[f]])))
+  yzCommonSubID=lapply(1:ylength, function(f) Reduce(intersect, list(ySubID[[f]], zSubID[[f]])))
   xyzCommonSubID=lapply(yzCommonSubID, function(f) Reduce(intersect, list(f, xCommonSubID)))
 
 

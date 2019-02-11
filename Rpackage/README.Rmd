@@ -13,7 +13,7 @@ The goal of **iProFun** is to
 
 * facilitate screening for cancer drivers contributing to tumor initiation and progression, since CNAs and DNA methylations that preserve functional consequences are more likely to be cancer drivers. 
 
-This package implement iProFun using 2 main functions. The primary function is (surprise!) `iProFun`, which first fit gene-level multiple linear regression to obtain summary statistics and then run Primo for detecting joint associations of DNA alternations with multi-omics traits. False discovery rate assessment is supported by `iProFun_permutate` function.
+This package implement iProFun using 2 main functions. The primary function is (surprise!) `iProFun`, which first fit multiple linear regression to obtain summary statistics and then use the statistics to detect joint associations of DNA alternations with multi-omic traits. False discovery rate assessment is supported by `iProFun_permutate` function.
 A full description of the method can be found in our [paper](https://www.biorxiv.org/content/early/2018/12/06/488833).
 
 ```{r setup, include=FALSE}
@@ -30,7 +30,7 @@ You can install the latest version directly from GitHub with [devtools](https://
 
 ```R
 install.packages("devtools")
-devtools::install_github("songxiaoyu/iProFun")
+devtools::install_github("songxiaoyu/Rpackage/iProFun")
 ````
 
 <!-- * the most recent officially-released version from CRAN with -->

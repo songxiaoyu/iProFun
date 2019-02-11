@@ -4,13 +4,12 @@
 \alias{iProFun_permutate}
 \title{iProFun false discovery rate assessment based on permutations}
 \usage{
-iProFun_permutate(ylist, xlist, covariates, pi = rep(0.05, 3),
-  permutate_number = 2, fdr = 0.1, PostCut = 0.75,
-  grids = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991,
-  0.9999, 1e-04)), filter = NULL, seed = .Random.seed[1], ID = NULL,
-  x.ID = NULL, y.ID = NULL, sub.ID.common = "TCGA",
-  colum.to.keep = c("phospho_ID", "Hybridization", "chr"),
-  missing.rate.filter = NULL)
+iProFun_permutate(ylist, xlist, covariates, pi, permutate_number = 10,
+  fdr = 0.1, PostCut = 0.75, grids = c(seq(0.75, 0.99, 0.01),
+  seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 1e-04)), filter = NULL,
+  seed = .Random.seed[1], ID = NULL, x.ID = NULL, y.ID = NULL,
+  sub.ID.common = "TCGA", colum.to.keep = c("phospho_ID",
+  "Hybridization", "chr"), missing.rate.filter = NULL)
 }
 \arguments{
 \item{ylist}{ylist is a list of data matrix. Each matrix is a data type or platform that
@@ -54,10 +53,10 @@ platforms preserve consistent directions (either positive or negative).}
 }
 \value{
 list with 3 components
-\item{FDR by posterior probabilities}{FDR by posterior probabilities}
-\item{Posterior Probability Cutoff:}{the cutoff values for each group based on permutation}
+\item{FDR by posterior probability cutoffs}{FDR by posterior probability cutoffs considered in grids}
+\item{Posterior Probability Cutoff:}{the cutoff values for FDR for each X and Y pairs based on permutation}
 \item{No. of Identified Variables:}{the number of identified variables for each X and Y pair}
-\item{iProFun Identification:}{A table indicating whether a gene is identified by iProFun or not}
+\item{iProFun Identification:}{A table indicating whether a gene is significantly identified by iProFun or not}
 }
 \description{
 iProFun false discovery rate assessment based on permutations
@@ -65,7 +64,7 @@ iProFun false discovery rate assessment based on permutations
 \examples{
 iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho),
 xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
-pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, PostCut = 0.75, filter <- c(1,0)),
+pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, PostCut = 0.75, filter <- c(1,0),
 grids = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001)),
 seed=123)
 }
