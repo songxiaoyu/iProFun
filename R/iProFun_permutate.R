@@ -45,7 +45,7 @@
 #' seed=123)
 iProFun_permutate = function(ylist, xlist, covariates, pi,
                              permutate_number = 10, fdr = 0.1, PostCut=0.75,
-                             grids = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001)),
+                             grids = seq(0.01, 0.99, by=0.01),
                              filter = NULL, seed=.Random.seed[1],
                              ID=NULL, x.ID=NULL, y.ID=NULL,  sub.ID.common="TCGA",
                              colum.to.keep=c("phospho_ID", "Hybridization", "chr"),
@@ -61,7 +61,6 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
   for (k in 1:xlength) {PostProb_original[[k]]=iprofun_result[[k]]$PostProb}
 
   # filter genes
-
   x_filter_gene=vector("list", xlength)
   for (k in 1: xlength){
     if (is.null(filter[k]) ){ # no requirement
@@ -69,7 +68,6 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
     } else if (filter[k] == 1){ # all positive
       x_filter_gene[[k]]= which(apply(iprofun_result[[k]]$betas_J, 1, function(x) all(x > 0)) )
     } else if (filter[k] == -1){  # all negative
-
       x_filter_gene[[k]]= which(apply(iprofun_result[[k]]$betas_J, 1, function(x) all(x < 0)))
     } else if (filter[k] == 0){ # all positive or all negative
       x_filter_gene[[k]]= which(apply(iprofun_result[[k]]$betas_J, 1, function(x) (all(x > 0) | all(x<0))==T ))
@@ -79,9 +77,7 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
 
 
   # No of genes that passes threshold grids in original data
-
   Q = makeQ(1:ylength)
-
   count_original_grid=vector("list", xlength); for (k in 1:xlength) {count_original_grid[[k]]=vector("list", ylength)}
 
   for (k in 1:xlength) {
@@ -92,7 +88,6 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
         temp=c(temp, sum(apply(Post_filter[, Q[, j] ==1],1,sum)>grids[p]))
       }
       count_original_grid[[k]][[j]]=rbind(count_original_grid[[k]][[j]], temp)
-
     }
   }
 
@@ -105,7 +100,6 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
 
   # The following codes run the the whole permutation "permutate_number" of times (each permutaion consist of "length(ylist)" times of sub-permutation)
   for (i in 1 : permutate_number) {
-
     set.seed(seed+i)
     PostProb_perm=vector("list", xlength); for (k in 1:xlength) {PostProb_perm[[k]]=vector("list", ylength)}
     for (j in 1:ylength){
@@ -120,10 +114,7 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
 
 
     # calculate the number of genes significant at each threshold level
-
-
     for (k in 1:xlength) {
-
       for (j in 1:ylength) {
         Post_filter=PostProb_perm[[k]][[j]][x_filter_gene[[k]],]
         temp=NULL
@@ -131,7 +122,6 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
         temp=c(temp, sum(apply(Post_filter[, Q[, j] ==1],1,sum)>grids[p]))
         }
         count_perm_grid[[k]][[j]]=rbind(count_perm_grid[[k]][[j]], temp)
-
       }
     }
 
@@ -145,7 +135,6 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
     for (k in 1:xlength) {
       for (j in 1:ylength) {
         fdr_grid[[k]]=rbind(fdr_grid[[k]], apply( count_perm_grid[[k]][[j]], 2, mean, na.rm = T)/ count_original_grid[[k]][[j]])
-
         }
       colnames(fdr_grid[[k]])=paste0("Prob", grids)
       rownames(fdr_grid[[k]])=paste0("Y", 1:ylength)
@@ -166,6 +155,7 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
         temp[sig]=1
         Gene_fdr[[k]]=cbind(Gene_fdr[[k]], temp)
       }
+      colnames(Gene_fdr[[k]])=paste0("Y", 1:ylength)
       Gene_fdr[[k]]=cbind(iprofun_result[[k]]$xName_J,  Gene_fdr[[k]])
     }
 

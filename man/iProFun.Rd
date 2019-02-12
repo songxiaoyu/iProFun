@@ -4,8 +4,8 @@
 \alias{iProFun}
 \title{iProFun Integrative analysis}
 \usage{
-iProFun(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
-  ID = NULL, x.ID = NULL, y.ID = NULL, sub.ID.common = "TCGA",
+iProFun(ylist, xlist, covariates, pi, permutate = 0, ID = NULL,
+  x.ID = NULL, y.ID = NULL, sub.ID.common = "TCGA",
   colum.to.keep = c("phospho_ID", "Hybridization", "chr"),
   missing.rate.filter = NULL, verbose = T)
 }

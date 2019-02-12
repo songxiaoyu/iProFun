@@ -70,8 +70,9 @@
 #' iprofun_result <- iProFun(ylist = list(rna, protein, phospho),
 #' xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3))
 
-iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
-                    ID=NULL, x.ID=NULL, y.ID=NULL,  sub.ID.common="TCGA", colum.to.keep=c("phospho_ID", "Hybridization", "chr"),
+iProFun <- function(ylist, xlist, covariates, pi, permutate = 0,
+                    ID=NULL, x.ID=NULL, y.ID=NULL,  sub.ID.common="TCGA",
+                    colum.to.keep=c("phospho_ID", "Hybridization", "chr"),
                     missing.rate.filter=NULL, verbose=T){
   # ----- Data cleaning and quality check ----- #
   # Check xlist, ylist and covariates data types
@@ -82,7 +83,7 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
   if (class(xlist)!="list") stop("xlist needs to be a list.")
   if ((class(covariates)!="list") | ylength!=zlength) stop("covariates need to provide a list of covariates with the same length as ylist.")
 
-  # Create subject ID sub.ID.common = "TCGA" | NULL | any string
+  # Create subject ID used for each regression
   if (is.null(x.ID)  & is.null(y.ID) & is.null(ID)) {SubIDExclude=unique(c(sapply(ylist, function(f) colnames(f)[1]), sapply(xlist, function(f) colnames(f)[1]), colum.to.keep))}
   if (is.null(ID)==F & is.null(y.ID)==T & is.null(x.ID)==T) {SubIDExclude=unique(c(ID, colum.to.keep))}
   if (is.null(ID)==T & is.null(x.ID)==F & is.null(y.ID)==F ) {SubIDExclude=unique(c(y.ID, x.ID, colum.to.keep))}
@@ -93,7 +94,8 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
     xSubID=lapply(xlist, function(f) colnames(f)[grepl(sub.ID.common, colnames(f))])
     zSubID=lapply(covariates,  function(f) colnames(f)[grepl(sub.ID.common, colnames(f))])
   } else if (is.null(sub.ID.common)) {
-    print("All columns that are not listed in xlist and ylist as variable IDs and colum.to.keep are considered as samples.")
+    if (verbose==T) {print("All columns that are not listed in xlist and ylist as variable
+                           IDs and colum.to.keep are considered as samples.")}
     ySubID=lapply(ylist, function(f) Reduce(setdiff, SubIDExclude, colnames(f)))
     xSubID=lapply(xlist, function(f) Reduce(setdiff, SubIDExclude, colnames(f)))
     zSubID=lapply(covariates, function(f) Reduce(setdiff, SubIDExclude, colnames(f)))
@@ -114,7 +116,7 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
     }
   }
 
-  # Create Gene ID
+  # Create common Gene ID
   if (is.null(x.ID)  & is.null(y.ID) & is.null(ID)) {
     if (verbose==T) {print("No IDs are specified. The first column of each data type in ylist and xlist are used.")}
 
@@ -122,12 +124,12 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
     Gene_ID_x=lapply(xlist, function(f) f[,1])
   }
   if (is.null(ID)==F & is.null(y.ID)==T & is.null(x.ID)==T) {
-    Gene_ID_y=lapply(ylist, function(f) f[ID])
-    Gene_ID_x=lapply(xlist, function(f) f[ID])
+    Gene_ID_y=lapply(ylist, function(f) f[ID][,1])
+    Gene_ID_x=lapply(xlist, function(f) f[ID][,1])
   }
   if (is.null(ID)==T & is.null(x.ID)==F & is.null(y.ID)==F ) {
-    Gene_ID_y=lapply(ylist, function(f) f[y.ID])
-    Gene_ID_x=lapply(xlist, function(f) f[x.ID])
+    Gene_ID_y=lapply(ylist, function(f) f[y.ID][,1])
+    Gene_ID_x=lapply(xlist, function(f) f[x.ID][,1])
   }
   if (is.null(x.ID)==F & is.null(y.ID)==F & is.null(ID)==F) stop("Only ID or x.ID/y.ID is needed to be specified")
   if (any(is.null(x.ID) & is.null(y.ID)==F,is.null(x.ID)==F & is.null(y.ID) )) stop("Both x.ID and y.ID are needed to be specified")
@@ -149,8 +151,10 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
 
   # ----- Linear Regression ----- #
 
-  betas_J <- vector("list", xlength);   betas_se_J <- vector("list", xlength);   sigma2_J <- vector("list", xlength);
-  dfs_J <- vector("list", xlength);   v_g_J <- vector("list", xlength);   xName_J <- vector("list", xlength);  yName_J <- vector("list", xlength)
+  betas_J <- vector("list", xlength);   betas_se_J <- vector("list", xlength);
+  sigma2_J <- vector("list", xlength); dfs_J <- vector("list", xlength);
+  v_g_J <- vector("list", xlength);   xName_J <- vector("list", xlength);
+  yName_J <- vector("list", xlength)
 
   for ( j in 1: ylength) {
     if (verbose==T) {print(paste0("Obtaining regression summaries for data type ", j))}
@@ -160,6 +164,7 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
     xName=vector("list", xlength);  yName=vector("list", xlength)
 
     for (i in 1:length(xyCommonGeneID)) {
+    #for (i in 1:3) {
       # print(i)
       if (j == permutate){
         y=ylist[[j]][which(Gene_ID_y[[j]]==xyCommonGeneID[i]) , xyzCommonSubID_permutate[[j]]]
@@ -208,8 +213,7 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
       v_g_single=as.matrix(diag(t(C) %*% inverse_xx %*% C))
 
       # annotation
-        # xName_single=lapply(1:xlength, function(f) xlist[[f]][which(Gene_ID_x[[f]]==xyCommonGeneID[i]), Reduce(intersect, list(SubIDExclude, colnames(xlist[[f]])))])
-        yName_single=ylist[[j]][which(Gene_ID_y[[j]]==xyCommonGeneID[i])[yindex],
+         yName_single=ylist[[j]][which(Gene_ID_y[[j]]==xyCommonGeneID[i])[yindex],
                          Reduce(intersect, list(SubIDExclude, colnames(ylist[[j]])) )]
 
     # output as different list for different x platforms
@@ -224,12 +228,10 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
       v_g[[p]]=c(v_g[[p]], v_g_single[index])
 
       xName_single=xlist[[p]][which(Gene_ID_x[[p]]==xyCommonGeneID[i]), Reduce(intersect, list(SubIDExclude, colnames(xlist[[p]])))]
-      xName[[p]] <- rbind(xName[[p]], xName_single)
+      xName[[p]] <- rbind(xName[[p]], as.matrix(xName_single))
       yName[[p]] <- rbind(yName[[p]], do.call("rbind", replicate(x_index[p], yName_single, simplify = F)))
     }
-
-
-}
+  }
 
     for (p in 1:xlength) {
       betas_J[[p]]=cbind(betas_J[[p]], betas[[p]])
@@ -238,10 +240,16 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
       dfs_J[[p]]=cbind(dfs_J[[p]], dfs[[p]])
       v_g_J[[p]]=cbind(v_g_J[[p]], v_g[[p]])
       xName_J[[p]] <- cbind(xName_J[[p]], as.matrix(xName[[p]]))
-      yName_J[[p]] <- cbind(yName_J[[p]], yName[[p]])
+      yName_J[[p]] <- cbind(yName_J[[p]], as.matrix(yName[[p]]))
     }
 
 }
+
+  for (p in 1:xlength) {
+    xName_J[[p]]=t(unique(t(xName_J[[p]])))
+    yName_J[[p]]=t(unique(t(yName_J[[p]])))
+  }
+
 
   # ------- iProFun with regression results  ------------------------------------------------------------------
   if (verbose==T) {print("Run iProFun")}
@@ -250,13 +258,16 @@ iProFun <- function(ylist, xlist, covariates, pi = rep(0.05, 3), permutate = 0,
   final_result <- vector(mode="list", xlength)
   for (p in 1:xlength) {
     # Summarize Regression
-    Reg_output[[p]]= list(betas_J=betas_J[[p]], betas_se_J=betas_se_J[[p]], sigma2_J=sigma2_J[[p]],dfs_J=dfs_J[[p]], v_g_J = v_g_J[[p]], xName_J = xName_J[[p]], yName_J = yName_J[[p]])
+    Reg_output[[p]]= list(betas_J=betas_J[[p]], betas_se_J=betas_se_J[[p]],
+                          sigma2_J=sigma2_J[[p]],dfs_J=dfs_J[[p]],
+                          v_g_J = v_g_J[[p]], xName_J = xName_J[[p]],
+                          yName_J = yName_J[[p]])
 
     # run iProFun
     x_iProFun[[p]]= MultiOmics_Input(Reg_output[[p]],pi1 = pi)
 
     # Summarize output
-    names(final_result)[p] <- paste0("iProFun output for predictor ", p)
+    names(final_result)[p] <- paste0("iProFun output for xlist ", p)
     final_result[[p]] <- vector(mode="list", length=6)
     final_result[[p]] = append(Reg_output[[p]], x_iProFun[[p]])
   }
