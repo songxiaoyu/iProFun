@@ -27,7 +27,7 @@ are availble for one variable ID (e.g. multiple methylation sites per gene with 
 variable ID), all rows are considered in the regression to account for the effects of each
 other. Example of xlist is a list of CNA and DNA methylation.}
 
-\item{covariates}{covariates is a list of data matrix. This list should have the same length
+\item{covariates}{covariates is a list of data matrix. This list should be NULL or have the same length
 as ylist. For the regression on the ith outcome, the ith covariates matrix contains the variables
 that to be adjusted in the regression. The matrix is formated as each covariate variable
 as a row, and each sample as a column. Multiple data matrixs need to have
@@ -85,5 +85,6 @@ iProFun Integrative analysis
 }
 \examples{
 iprofun_result <- iProFun(ylist = list(rna, protein, phospho),
-xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3))
+xlist = list(cna, methy), covariates = list(rna_pc_1_3,
+protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3))
 }

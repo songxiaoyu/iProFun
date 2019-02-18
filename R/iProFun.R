@@ -15,7 +15,7 @@
 #' are availble for one variable ID (e.g. multiple methylation sites per gene with gene ID as
 #' variable ID), all rows are considered in the regression to account for the effects of each
 #' other. Example of xlist is a list of CNA and DNA methylation.
-#' @param covariates covariates is a list of data matrix. This list should have the same length
+#' @param covariates covariates is a list of data matrix. This list should be NULL or have the same length
 #' as ylist. For the regression on the ith outcome, the ith covariates matrix contains the variables
 #' that to be adjusted in the regression. The matrix is formated as each covariate variable
 #' as a row, and each sample as a column. Multiple data matrixs need to have
@@ -68,7 +68,8 @@
 #' @importFrom matrixStats rowMins
 #' @examples
 #' iprofun_result <- iProFun(ylist = list(rna, protein, phospho),
-#' xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3))
+#' xlist = list(cna, methy), covariates = list(rna_pc_1_3,
+#' protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3))
 
 iProFun <- function(ylist, xlist, covariates, pi, permutate = 0,
                     ID=NULL, x.ID=NULL, y.ID=NULL,  sub.ID.common="TCGA",
@@ -81,7 +82,8 @@ iProFun <- function(ylist, xlist, covariates, pi, permutate = 0,
   zlength=length(covariates)
   if (class(ylist)!="list" | ylength<2) stop("ylist needs to be a list with at least 2 data types.")
   if (class(xlist)!="list") stop("xlist needs to be a list.")
-  if ((class(covariates)!="list") | ylength!=zlength) stop("covariates need to provide a list of covariates with the same length as ylist.")
+  if (is.null(covariates)==F & (class(covariates)=="list" & ylength!=zlength))
+    stop("covariates need to be NULL or to provide a list of covariates with the same length as ylist.")
 
   # Create subject ID used for each regression
   if (is.null(x.ID)  & is.null(y.ID) & is.null(ID)) {SubIDExclude=unique(c(sapply(ylist, function(f) colnames(f)[1]), sapply(xlist, function(f) colnames(f)[1]), colum.to.keep))}
@@ -101,8 +103,12 @@ iProFun <- function(ylist, xlist, covariates, pi, permutate = 0,
     zSubID=lapply(covariates, function(f) Reduce(setdiff, SubIDExclude, colnames(f)))
   }
   xCommonSubID=Reduce(intersect, xSubID)
-  yzCommonSubID=lapply(1:ylength, function(f) Reduce(intersect, list(ySubID[[f]], zSubID[[f]])))
-  xyzCommonSubID=lapply(yzCommonSubID, function(f) Reduce(intersect, list(f, xCommonSubID)))
+  if (is.null(covariates)) {
+    xyzCommonSubID=lapply(1:ylength, function(f) Reduce(intersect, list(ySubID[[f]], xCommonSubID)))
+  } else {
+    yzCommonSubID=lapply(1:ylength, function(f) Reduce(intersect, list(ySubID[[f]], zSubID[[f]])))
+    xyzCommonSubID=lapply(yzCommonSubID, function(f) Reduce(intersect, list(f, xCommonSubID)))
+    }
 
 
   # Allow missing rate filtering
@@ -176,11 +182,14 @@ iProFun <- function(ylist, xlist, covariates, pi, permutate = 0,
       x_i= lapply(1:xlength, function(f) xlist[[f]][which(Gene_ID_x[[f]]==xyCommonGeneID[i]), xyzCommonSubID[[j]] ])
       x_index=sapply(x_i, nrow)
       x=t(do.call(rbind,x_i))
-      z= t(covariates[[j]][, xyzCommonSubID[[j]]])
+      if (is.null(covariates)) {z=NULL} else {
+        z= t(covariates[[j]][, xyzCommonSubID[[j]]])
+      }
+
 
 
       xx=as.matrix(cbind(1, x, z))
-      zz = as.matrix(cbind(1, z))
+      zz = as.matrix(cbind(rep(1, nrow(xx)), z))
       p_xx=ncol(xx)
       p_x=ncol(x)
 

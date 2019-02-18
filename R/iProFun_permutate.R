@@ -30,11 +30,12 @@
 
 #' @param grids grids specify the searching grids to find significant associations
 #' @param seed seed allows users to externally assign seed to replicate results.
-#' @return list with 3 components
-#' \item{FDR by posterior probability cutoffs}{FDR by posterior probability cutoffs considered in grids}
-#' \item{Posterior Probability Cutoff:}{the cutoff values for FDR for each X and Y pairs based on permutation}
-#' \item{No. of Identified Variables:}{the number of identified variables for each X and Y pair}
-#' \item{iProFun Identification:}{A table indicating whether a gene is significantly identified by iProFun or not}
+#' @return list with 4 components
+#' \item{fdr_grid:}{FDR by posterior probability cutoffs considered in grids}
+#' \item{fdr_cutPob:}{the cutoff values for prespecified FDR rate and posterior probability for each X and Y pairs based on permutation}
+#' \item{NoIdentified:}{the number of identified variables for each X and Y pair}
+#' \item{Gene_fdr:}{A table indicating whether a gene is significantly identified by iProFun or not. "1" indicates the gene
+#' is significantly identified; "0" indicates the gene is not.}
 #' @export iProFun_permutate
 #'
 #' @examples
@@ -140,12 +141,17 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
       rownames(fdr_grid[[k]])=paste0("Y", 1:ylength)
     }
 
+    AboveCut=which(grids>=PostCut)
+    grid_PostCut= AboveCut[which.min(abs(AboveCut- PostCut))]
+
     fdr_cut=lapply(fdr_grid, function(f)
-      apply(f, 1, function(f2) min(which(f2<fdr))) )
+      apply(f, 1, function(f2) max(min(which(f2<fdr)), grid_PostCut) ))
+    fdr_cutPob=lapply(1:xlength, function(f)
+      sapply(1:ylength, function(f2) grids[fdr_cut[[f]][f2] ] ))
+
     NoIdentified=lapply(1:xlength, function(f)
       sapply(1:ylength, function(f2) count_original_grid[[f]][[f2]][fdr_cut[[f]][f2]]))
-    fdr_cutPob=lapply(1:xlength, function(f)
-      sapply(1:ylength, function(f2) grids[fdr_cut[[f]][f2] ]))
+
 
     Gene_fdr=vector("list", xlength);
     for (k in 1:length(xlist)) {

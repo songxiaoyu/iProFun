@@ -5,11 +5,11 @@
 \title{iProFun false discovery rate assessment based on permutations}
 \usage{
 iProFun_permutate(ylist, xlist, covariates, pi, permutate_number = 10,
-  fdr = 0.1, PostCut = 0.75, grids = c(seq(0.75, 0.99, 0.01),
-  seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 1e-04)), filter = NULL,
-  seed = .Random.seed[1], ID = NULL, x.ID = NULL, y.ID = NULL,
-  sub.ID.common = "TCGA", colum.to.keep = c("phospho_ID",
-  "Hybridization", "chr"), missing.rate.filter = NULL)
+  fdr = 0.1, PostCut = 0.75, grids = seq(0.01, 0.99, by = 0.01),
+  filter = NULL, seed = .Random.seed[1], ID = NULL, x.ID = NULL,
+  y.ID = NULL, sub.ID.common = "TCGA",
+  colum.to.keep = c("phospho_ID", "Hybridization", "chr"),
+  missing.rate.filter = NULL)
 }
 \arguments{
 \item{ylist}{ylist is a list of data matrix. Each matrix is a data type or platform that
@@ -52,11 +52,12 @@ platforms preserve consistent directions (either positive or negative).}
 \item{seed}{seed allows users to externally assign seed to replicate results.}
 }
 \value{
-list with 3 components
-\item{FDR by posterior probability cutoffs}{FDR by posterior probability cutoffs considered in grids}
-\item{Posterior Probability Cutoff:}{the cutoff values for FDR for each X and Y pairs based on permutation}
-\item{No. of Identified Variables:}{the number of identified variables for each X and Y pair}
-\item{iProFun Identification:}{A table indicating whether a gene is significantly identified by iProFun or not}
+list with 4 components
+\item{fdr_grid:}{FDR by posterior probability cutoffs considered in grids}
+\item{fdr_cutPob:}{the cutoff values for prespecified FDR rate and posterior probability for each X and Y pairs based on permutation}
+\item{NoIdentified:}{the number of identified variables for each X and Y pair}
+\item{Gene_fdr:}{A table indicating whether a gene is significantly identified by iProFun or not. "1" indicates the gene
+is significantly identified; "0" indicates the gene is not.}
 }
 \description{
 iProFun false discovery rate assessment based on permutations
