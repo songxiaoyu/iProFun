@@ -30,7 +30,7 @@ You can install the latest version directly from GitHub with [devtools](https://
 
 ```R
 install.packages("devtools")
-devtools::install_github("songxiaoyu/Rpackage/iProFun")
+devtools::install_github("songxiaoyu/iProFun")
 ````
 
 <!-- * the most recent officially-released version from CRAN with -->
@@ -64,46 +64,44 @@ data(cna)
 To implement iProFun, we can use `iProFun`
 
 ```{r,cache=TRUE}
-iprofun_result <- iProFun(ylist = list(rna, protein, phospho), xlist = list(cna, methy),
-  covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
-  pi = rep(0.05, 3))
+iprofun_result <- iProFun(ylist = list(rna, protein, phospho), xlist = list(cna, methy), covariates = list(rna_pc_1_3,
+protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3))
 ```
 
-The result of the function contains a list with the following components. The first component shows the names for each pattern. `000` means none, `010` means only the second element in the xlist present. 
+The result of the function contains a list. The length of the output list equals to the number of element in the xlist. In each element of the list, there is a sublist containing the results associated with the data in xlist.  
+
+The following componentshows the marginal posterior probability for each pattern associated with the first element in xlist.
 
 ```{r}
-iprofun_result$group
+iprofun_result$`iProFun output for xlist 1`$colocProb
 ```
 
-The following two components shows the marginal posterior probability for each pattern.
+We can also show the posterior probability for each pattern associated with the first element in xlist.
+
 ```{r}
-iprofun_result$x_1_iProFun_marginal_probability
+head(cbind(iprofun_result$`iProFun output for xlist 1`$yName_J, iprofun_result$`iProFun output for xlist 1`$PostProb))
 ```
 
-We can also show the posterior probability for each pattern.
+The following shows the beta coefficients for each gene-level multiple linear regression.
 
 ```{r}
-head(iprofun_result$x_1_iProFun_gene_posterior_probability)
-```
-
-The last several elements in the list show the beta coefficients for each gene-level multiple linear regression.
-
-```{r}
-head(iprofun_result$x_1_iProFun_gene_beta)
+head(cbind(iprofun_result$`iProFun output for xlist 1`$yName_J, iprofun_result$`iProFun output for xlist 1`$betas_J))
 ```
 To control false discovery rate for the result, we can use `iProFun_permutate`. To save time, I will set number of permutation to 1. In our paper, we permutate 100 times to control the empirical FDR.
 ```{r, cache = TRUE}
-iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho), xlist = list(cna, methy),
-  covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
-  pi = rep(0.05, 3), permutate_number = 1, thresholds =c(0.05,0.99,0.01), fdr = 0.1, filter = c(1,0))
+iprofun_permutate_result <- iProFun_permutate(ylist = list(rna, protein, phospho),
+xlist = list(cna, methy), covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3),
+pi = rep(0.05, 3), permutate_number = 1, fdr = 0.1, PostCut = 0.75, filter <- c(1,0),
+grids = c(seq(0.75, 0.99, 0.01), seq(0.991, 0.999, 0.001), seq(0.9991, 0.9999, 0.0001)),
+seed=123)
 ```
 The result of the function contains a list with the following components. The first component shows the cutoff values for each group based on permutation.
 ```{r}
-iprofun_permutate_result$cutoff
+iprofun_permutate_result$fdr_cutPob
 ```
 The following components show the genes names that are identified by iProFun with the FDR crteria we set in each group.
 ```{r}
-iprofun_permutate_result$x_2_y_2
+head(iprofun_permutate_result$Gene_fdr[[1]])
 ```
 
 ### Contributions
