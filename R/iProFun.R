@@ -186,8 +186,6 @@ iProFun <- function(ylist, xlist, covariates, pi, permutate = 0,
         z= t(covariates[[j]][, xyzCommonSubID[[j]]])
       }
 
-
-
       xx=as.matrix(cbind(1, x, z))
       zz = as.matrix(cbind(rep(1, nrow(xx)), z))
       p_xx=ncol(xx)

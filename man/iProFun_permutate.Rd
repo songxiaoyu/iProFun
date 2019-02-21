@@ -58,6 +58,9 @@ list with 4 components
 \item{NoIdentified:}{the number of identified variables for each X and Y pair}
 \item{Gene_fdr:}{A table indicating whether a gene is significantly identified by iProFun or not. "1" indicates the gene
 is significantly identified; "0" indicates the gene is not.}
+\item{PostProb_original:}{The posterior probabilities in iProFun analysis with input data.}
+\item{PostProb_perm:}{The posterior probabilities with permutated data. for the i-the permutation for j-th Y and k-th X,
+the posterior probabilities is saved inPostProb_perm[[k]][[j]][[i]].}
 }
 \description{
 iProFun false discovery rate assessment based on permutations

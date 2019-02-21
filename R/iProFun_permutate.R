@@ -36,6 +36,9 @@
 #' \item{NoIdentified:}{the number of identified variables for each X and Y pair}
 #' \item{Gene_fdr:}{A table indicating whether a gene is significantly identified by iProFun or not. "1" indicates the gene
 #' is significantly identified; "0" indicates the gene is not.}
+#' \item{PostProb_original:}{The posterior probabilities in iProFun analysis with input data.}
+#' \item{PostProb_perm:}{The posterior probabilities with permutated data. for the i-the permutation for j-th Y and k-th X,
+#' the posterior probabilities is saved inPostProb_perm[[k]][[j]][[i]].}
 #' @export iProFun_permutate
 #'
 #' @examples
@@ -73,7 +76,6 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
     } else if (filter[k] == 0){ # all positive or all negative
       x_filter_gene[[k]]= which(apply(iprofun_result[[k]]$betas_J, 1, function(x) (all(x > 0) | all(x<0))==T ))
     }
-
   }
 
 
@@ -92,25 +94,37 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
     }
   }
 
+
   # No of genes that passes threshold grids in permutation data
-    count_perm_grid=vector("list", xlength);
-    for (k in 1:xlength) {
-      count_perm_grid[[k]]=vector("list", ylength)
-    }
+  count_perm_grid=vector("list", xlength);
+  for (k in 1:xlength) {
+    count_perm_grid[[k]]=vector("list", ylength)
+  }
 
 
   # The following codes run the the whole permutation "permutate_number" of times (each permutaion consist of "length(ylist)" times of sub-permutation)
+  PostProb_perm_all=vector("list", xlength);
+  for (k in 1:xlength) {
+    PostProb_perm_all[[k]]=vector("list", ylength);
+    for (j in 1:ylength) {
+      PostProb_perm_all[[k]][[j]]=vector("list", permutate_number);
+    }
+  }
+
   for (i in 1 : permutate_number) {
     set.seed(seed+i)
     PostProb_perm=vector("list", xlength); for (k in 1:xlength) {PostProb_perm[[k]]=vector("list", ylength)}
     for (j in 1:ylength){
       iprofun_perm = iProFun(ylist = ylist, xlist = xlist,
-                                                 covariates = covariates, permutate = j,
-                                                 pi=pi, ID=ID, x.ID=x.ID, y.ID=y.ID,
-                                                 sub.ID.common = sub.ID.common,
-                                                 colum.to.keep=colum.to.keep,
-                                                 missing.rate.filter=missing.rate.filter, verbose=F)
-      for (k in 1:xlength) {PostProb_perm[[k]][[j]]=iprofun_perm[[k]]$PostProb}
+                             covariates = covariates, permutate = j,
+                             pi=pi, ID=ID, x.ID=x.ID, y.ID=y.ID,
+                             sub.ID.common = sub.ID.common,
+                             colum.to.keep=colum.to.keep,
+                             missing.rate.filter=missing.rate.filter, verbose=F)
+      for (k in 1:xlength) {
+        PostProb_perm[[k]][[j]]=iprofun_perm[[k]]$PostProb;
+        PostProb_perm_all[[k]][[j]][[i]]=iprofun_perm[[k]]$PostProb
+      }
     }
 
 
@@ -120,7 +134,7 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
         Post_filter=PostProb_perm[[k]][[j]][x_filter_gene[[k]],]
         temp=NULL
         for (p in 1:length(grids)) {
-        temp=c(temp, sum(apply(Post_filter[, Q[, j] ==1],1,sum)>grids[p]))
+          temp=c(temp, sum(apply(Post_filter[, Q[, j] ==1],1,sum)>grids[p]))
         }
         count_perm_grid[[k]][[j]]=rbind(count_perm_grid[[k]][[j]], temp)
       }
@@ -130,16 +144,16 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
   }
 
 
- # calculate FDR based cutoff
-    fdr_grid=vector("list", xlength);
+  # calculate FDR based cutoff
+  fdr_grid=vector("list", xlength);
 
-    for (k in 1:xlength) {
-      for (j in 1:ylength) {
-        fdr_grid[[k]]=rbind(fdr_grid[[k]], apply( count_perm_grid[[k]][[j]], 2, mean, na.rm = T)/ count_original_grid[[k]][[j]])
-        }
-      colnames(fdr_grid[[k]])=paste0("Prob", grids)
-      rownames(fdr_grid[[k]])=paste0("Y", 1:ylength)
+  for (k in 1:xlength) {
+    for (j in 1:ylength) {
+      fdr_grid[[k]]=rbind(fdr_grid[[k]], apply( count_perm_grid[[k]][[j]], 2, mean, na.rm = T)/ count_original_grid[[k]][[j]])
     }
+    colnames(fdr_grid[[k]])=paste0("Prob", grids)
+    rownames(fdr_grid[[k]])=paste0("Y", 1:ylength)
+  }
 
     AboveCut=which(grids>=PostCut)
     grid_PostCut= AboveCut[which.min(abs(AboveCut- PostCut))]
@@ -165,7 +179,7 @@ iProFun_permutate = function(ylist, xlist, covariates, pi,
       Gene_fdr[[k]]=cbind(iprofun_result[[k]]$xName_J,  Gene_fdr[[k]])
     }
 
-    permutation_result=list(fdr_grid=fdr_grid, fdr_cutPob=fdr_cutPob, NoIdentified=NoIdentified, Gene_fdr=Gene_fdr )
+    permutation_result=list(fdr_grid=fdr_grid, fdr_cutPob=fdr_cutPob, NoIdentified=NoIdentified, Gene_fdr=Gene_fdr, PostProb_original=PostProb_original, PostProb_perm= PostProb_perm_all)
 
   return(permutation_result)
 }
