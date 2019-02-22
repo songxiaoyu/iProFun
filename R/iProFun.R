@@ -21,7 +21,7 @@
 #' as a row, and each sample as a column. Multiple data matrixs need to have
 #' shared sample ID and variable ID for integrative iProFun analysis. Example of covariates is
 #' a list of principle components.
-#' @param pi pi is pre-specified priori of proportion of non-null statistics in each set of regression.
+#' @param pi1 pi1 is pre-specified priori of proportion of non-null statistics in each set of regression.
 #' iProFun is insensitive to the mis-specification of the priori within a reasonable range.
 #' @param permutate whether to permuate certain data type/platform or not. permutate = 0 (default):
 #' no permuatation, analysis on original data. 0 < permutate <= length of ylist: permuate the label of
@@ -68,11 +68,11 @@
 #' @importFrom matrixStats rowMins
 #' @examples
 #' iprofun_result <- iProFun(ylist = list(rna, protein, phospho),
-#' xlist = list(cna, methy), covariates = list(rna_pc_1_3,
-#' protein_pc_1_3, phospho_pc_1_3), pi = rep(0.05, 3))
+#' xlist = list(cna, methy),
+#' covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), pi1 = rep(0.05, 3))
 
-iProFun <- function(ylist, xlist, covariates, pi, permutate = 0,
-                    ID=NULL, x.ID=NULL, y.ID=NULL,  sub.ID.common="TCGA",
+iProFun <- function(ylist, xlist, covariates, pi1,
+                    permutate = 0, ID=NULL, x.ID=NULL, y.ID=NULL,  sub.ID.common="TCGA",
                     colum.to.keep=c("phospho_ID", "Hybridization", "chr"),
                     missing.rate.filter=NULL, verbose=T){
   # ----- Data cleaning and quality check ----- #
@@ -200,12 +200,28 @@ iProFun <- function(ylist, xlist, covariates, pi, permutate = 0,
       } else {yindex=1}
       yy=y[,yindex]
 
+      # # LR function based
+      #
+      # ft=lm(yy~xx-1)
+      # alphas=as.matrix(ft$coef)
+      # df1=ft$df.residual
+      # s_g_square=sum(ft$residuals^2)/df1
+      # inverse_xx=vcov(ft)/s_g_square
 
-      ft=lm(yy~xx-1)
-      alphas=as.matrix(ft$coef)
-      df1=ft$df.residual
-      s_g_square=sum(ft$residuals^2)/df1
-      inverse_xx=vcov(ft)/s_g_square
+      # Self coding
+
+      index=complete.cases(xx) & complete.cases(yy)
+      yy_complete2=yy[index]; xx_complete2=xx[index,];
+      n=length(yy_complete2)
+      inverse_xx=inverse(t(xx_complete2) %*% xx_complete2)
+      alphas <- inverse_xx %*% t(xx_complete2) %*% yy_complete2
+      df1= n-p_xx
+      alpha_variance <- as.numeric(1/(n - p_xx) * (sum(yy_complete2^2) - t(yy_complete2) %*%
+                         xx_complete2 %*% inverse_xx %*% t(xx_complete2) %*% yy_complete2)) * inverse_xx
+      alpha_se = diag(sqrt(alpha_variance))
+      s_g_square=mean(alpha_variance/inverse_xx)
+
+
 
       if(p_x==1) {C=as.matrix(c(0, 1, rep(0, p_xx-2)))}
       if (p_x>1) {
@@ -214,7 +230,7 @@ iProFun <- function(ylist, xlist, covariates, pi, permutate = 0,
       }
 
       betas_single=t(C) %*% alphas # variable of interest
-      betas_se_single= t(C) %*% summary(ft)$coef[,2]
+      betas_se_single= t(C) %*% alpha_se
       sigma2_single=as.matrix(rep(s_g_square, p_x))
       dfs_single= as.matrix(rep(df1, p_x))
       v_g_single=as.matrix(diag(t(C) %*% inverse_xx %*% C))
@@ -271,7 +287,7 @@ iProFun <- function(ylist, xlist, covariates, pi, permutate = 0,
                           yName_J = yName_J[[p]])
 
     # run iProFun
-    x_iProFun[[p]]= MultiOmics_Input(Reg_output[[p]],pi1 = pi)
+    x_iProFun[[p]]= MultiOmics_Input(Reg_output[[p]],pi1 = pi1)
 
     # Summarize output
     names(final_result)[p] <- paste0("iProFun output for xlist ", p)
