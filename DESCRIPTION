@@ -1,17 +1,22 @@
 Package: iProFun
-Title: An integrative analysis tool to screen for Proteogenomic Functional traits perturbed by DNA copy number alterations (CNA) and DNA methylation
-Version: 0.1.0
+Title: An integrative analysis tool to screen for Proteogenomic Functional traits perturbed by DNA alterations
+Version: 0.2.0
 Authors@R: person("Jiayi", "Ji", email = "Jiayi.Ji@mountsinai.org", role = c("aut", "cre"))
-Description: The goal of iProFun is to 1) characterize functional consequences of DNA copy number and methylation alterations in tumors 2)facilitate screening for cancer drivers contributing to tumor initiation and progression, since CNAs and DNA methylations that preserve functional consequences are more likely to be cancer drivers.
-Depends: R (>= 3.5.0)
+Description: The goal of iProFun is to 1) characterize functional consequences of DNA alterations by providing the probabilities of different association patterns, 2) identify key genes whose DNA alterations preserve functional consequences on downstream molecules at FDR controlled error rate.
+Depends: R (>= 4.0)
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 Imports: broom,
     dplyr,
     magrittr,
     purrr,
     tibble,
     tidyr,
-    matrixStats
+    matrixStats, 
+    parallel,
+    metRology, 
+    stats,
+    prodlim,
+    methods

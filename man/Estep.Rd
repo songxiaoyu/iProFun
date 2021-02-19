@@ -2,10 +2,26 @@
 % Please edit documentation in R/EM.R
 \name{Estep}
 \alias{Estep}
-\title{consider matrixStats::rowMins() or rpgm::rowMins()}
+\title{Internal function for EM algorithm E step}
 \usage{
 Estep(cl, oldpi, n_trio, n_pattern, q, density_0, density_1)
 }
+\arguments{
+\item{cl}{Parallel computing}
+
+\item{oldpi}{Proportion of alteratives}
+
+\item{n_trio}{No. of trios}
+
+\item{n_pattern}{No. of association patterns (=2^J).}
+
+\item{q}{Association patterns}
+
+\item{density_0}{Density under null distribution}
+
+\item{density_1}{Density under alternative distribution
+consider matrixStats::rowMins() or rpgm::rowMins()}
+}
 \description{
-consider matrixStats::rowMins() or rpgm::rowMins()
+Internal function for EM algorithm E step
 }

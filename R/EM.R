@@ -1,3 +1,15 @@
+
+#' Internal function for EM algorithm E step
+
+#' @param cl Parallel computing
+#' @param oldpi  Proportion of alteratives
+#' @param n_trio No. of trios
+#' @param n_pattern No. of association patterns (=2^J).
+#' @param q  Association patterns
+#' @param density_0 Density under null distribution
+#' @param density_1 Density under alternative distribution
+
+
 Estep<-function(cl, oldpi, n_trio, n_pattern, q, density_0, density_1){
   Bmatrix<-matrix(NA,nrow=n_trio,ncol=n_pattern)
 
@@ -30,11 +42,15 @@ Estep<-function(cl, oldpi, n_trio, n_pattern, q, density_0, density_1){
 }
 
 
+#' Internal function for EM algorithm M step
+#' @param oldB  Posterior probabilities for each trio
+#' @param n_trio No. of trios
+#' @param n_pattern No. of association patterns (=2^J).
 
 ##Mstep obtains the pi that maximizes the posterior expectation function in the expecation step.
 Mstep<-function(oldB, n_trio, n_pattern){
-  #  newpi<-(apply(oldB,2,sum)+1)/(n_trio+n_pattern)
-  newpi<-colSums(oldB)/(n_trio)
+  index=apply(oldB, 1, function(f) any(is.na(f)==F))
+  newpi<-colSums(oldB[index,])/(sum(index))
   Lst<-list(newpi=newpi)
   Lst
 }

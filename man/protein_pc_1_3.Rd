@@ -4,13 +4,15 @@
 \name{protein_pc_1_3}
 \alias{protein_pc_1_3}
 \title{First 3 principle components for protein data}
-\format{A data frame with 68 rows and 4 variables:
+\format{
+A data frame with 68 rows and 4 variables:
 \describe{
   \item{subject_id}{Subject ID name}
   \item{protein_pc1}{First principle component for protein data}
   \item{protein_pc2}{Second principle component for protein data}
   \item{protein_pc3}{Third principle component for protein data}
-}}
+}
+}
 \usage{
 protein_pc_1_3
 }

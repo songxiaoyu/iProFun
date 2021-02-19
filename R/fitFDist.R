@@ -1,5 +1,19 @@
-##fitFDist is the function to obtain the empirical bayes estimate of n0 and s0^2 described on the top of the file. This function is extracted from limma package.
-##The input x is the vector of s_g_square's (all trios in one tissue), and df1 is the vector of df_g's (all trios in one tissue).
+
+#' Internal function for calculating empirical bayes estimates
+#'
+#' fitFDist is the function to obtain the empirical bayes estimate of n0 and s0^2 described on the top of the file. This function is extracted from limma package.
+# The input x is the vector of s_g_square's (all trios in one tissue), and df1 is the vector of df_g's (all trios in one tissue).
+#' @param x Input scale (e.g. variance of regression errors)
+#' @param df1  Degrees of freedom for input regression.
+#' @param covariate Covariates
+#' @return
+#' \item{scale:}{Scale for rescaled t distribution.}
+#' \item{df2:}{Degrees of freedom for rescaled t distribution.}
+
+
+
+
+
 fitFDist <- function(x,df1,covariate=NULL)
   #	Moment estimation of the parameters of a scaled F-distribution.
   #	The numerator degrees of freedom are given, the denominator is to be estimated.

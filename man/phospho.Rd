@@ -4,13 +4,15 @@
 \name{phospho}
 \alias{phospho}
 \title{Sample Phospho data}
-\format{A data frame with 1591 rows and 70 variables:
+\format{
+A data frame with 1591 rows and 70 variables:
 \describe{
   \item{Gene_ID}{Gene name}
   \item{TCGA-04-1331}{Phospho measurement for TCGA-04-1331}
   \item{TCGA-04-1332}{Phospho measurement for TCGA-04-1332}
   ...
-}}
+}
+}
 \usage{
 phospho
 }

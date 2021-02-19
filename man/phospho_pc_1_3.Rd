@@ -4,13 +4,15 @@
 \name{phospho_pc_1_3}
 \alias{phospho_pc_1_3}
 \title{First 3 principle components for Phospho data}
-\format{A data frame with 68 rows and 4 variables:
+\format{
+A data frame with 68 rows and 4 variables:
 \describe{
   \item{subject_id}{Subject ID name}
   \item{phospho_pc1}{First principle component for phospho data}
   \item{phospho_pc2}{Second principle component for phospho data}
   \item{phospho_pc3}{Third principle component for phospho data}
-}}
+}
+}
 \usage{
 phospho_pc_1_3
 }

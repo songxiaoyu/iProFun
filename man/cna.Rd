@@ -4,13 +4,15 @@
 \name{cna}
 \alias{cna}
 \title{Sample Copy Number Alternation data}
-\format{A data frame with 676 rows and 526 variables:
+\format{
+A data frame with 676 rows and 526 variables:
 \describe{
   \item{Gene_ID}{Gene name}
   \item{TCGA-04-1331}{CNA measurement for TCGA-04-1331}
   \item{TCGA-04-1332}{CNA measurement for TCGA-04-1332}
   ...
-}}
+}
+}
 \usage{
 cna
 }
