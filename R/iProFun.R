@@ -1,5 +1,5 @@
 #' @description
-#' @useDynLib iProFun, .registration = TRUE
+#' @useDynLib iProFun
 #' @keywords internal
 #' @import rlang
 #' "_PACKAGE"

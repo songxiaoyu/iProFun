@@ -15,7 +15,7 @@
 #'
 
 # function to get prob for 1y, with missing
-iProFun.sum.prob.1y <- function (prob, which.y=2, NoProbXIndex=c(2,4)) {
+iProFun.sum.prob.1y <- function (prob, which.y=1, NoProbXIndex=NULL) {
   xlength=length(prob)
   x.prob=setdiff(1:xlength, NoProbXIndex)
 
@@ -28,22 +28,24 @@ iProFun.sum.prob.1y <- function (prob, which.y=2, NoProbXIndex=c(2,4)) {
     prob.all[[p]]=apply(prob[[k]]$PostProb[,which(Q_index==1)], 1, sum)
 
     config.miss=prob[[k]]$Config.miss
-    for (j in 1:length(config.miss)) {
+    if (is.null(config.miss)==F) {
+      for (j in 1:length(config.miss)) {
       #print(j)
-      Q_index1= config.miss[[j]][, colnames(config.miss[[j]])==as.character(which.y)]
-      prob.temp=prob[[k]]$PostProb.miss[[j]]
+        Q_index1= config.miss[[j]][, colnames(config.miss[[j]])==as.character(which.y)]
+        prob.temp=prob[[k]]$PostProb.miss[[j]]
 
-      if (length(which(Q_index1==1))==1 ) {
-        prob.miss1=prob.temp[,which(Q_index1==1)]
-        prob.all[[p]][row.match(data.frame(prob[[k]]$xName.miss[[j]]), data.frame(prob[[k]]$xName_J))]=prob.miss1
-      }
+        if (length(which(Q_index1==1))==1 ) {
+          prob.miss1=prob.temp[,which(Q_index1==1)]
+          prob.all[[p]][row.match(data.frame(prob[[k]]$xName.miss[[j]]), data.frame(prob[[k]]$xName_J))]=prob.miss1
+        }
 
-      if (length(which(Q_index1==1))>1 &  nrow(prob.temp)>1) {
-        prob.miss1=apply(as.matrix(prob.temp[,which(Q_index1==1)]), 1, sum)
-        prob.all[[p]][row.match(data.frame(prob[[k]]$xName.miss[[j]]), data.frame(prob[[k]]$xName_J))]=prob.miss1
-      }
+        if (length(which(Q_index1==1))>1 &  nrow(prob.temp)>1) {
+          prob.miss1=apply(as.matrix(prob.temp[,which(Q_index1==1)]), 1, sum)
+          prob.all[[p]][row.match(data.frame(prob[[k]]$xName.miss[[j]]), data.frame(prob[[k]]$xName_J))]=prob.miss1
+        }
 
-    } # end (j), which fills the list of missing values
+      } 
+    }# end (j), which fills the list of missing values
   }
   return(prob.all)
 }
@@ -122,12 +124,12 @@ iProFun.eFDR.1y= function(reg.all, which.y, yList, xList, covariates, pi1,
                           var.ID=c("Gene_ID"),
                           var.ID.additional=NULL, seed=NULL) {
 
-  # NoProbXIndex=c(2,4);filter=NULL;
+  # NoProbXIndex=NULL;filter=c(1,0);
   # permutate_number=1;
   # grids = seq(0.01, 0.99, by=0.01);
   # fdr = 0.1; PostCut=0.75;
   # var.ID=c("Gene_ID");
-  # var.ID.additional=c( "phospho_ID", "Hybridization", "chr"); seed=NULL
+  # var.ID.additional=NULL; seed=NULL
 
   xlength=length(xList)
   x.prob=setdiff(1:xlength, NoProbXIndex)
