@@ -13,7 +13,6 @@
 #' no permuatation and it should be used for analysis of original data. permutation = T: permutate the
 #' label of outcome, which is useful in generating eFDR controlled discoveries.
 #' @param var.ID var.ID gives the variable name (e.g. gene/protein name) to match different data types.
-#' If IDs are not specified, the first columns will be considered as ID variable.
 #' @param var.ID.additional var.ID.additional allows to output additional variable names from the input.
 #' Often helpful if multiple rows (e.g. probes) are considered per gene to allow clear index of the rows.
 #' @param seed seed allows users to externally assign seed to replicate results. Useful when permutation=T.
@@ -88,18 +87,11 @@ iProFun.reg.1y<-function(yList.1y, xList, covariates.1y, permutation=F,
   # ----- Data cleaning and quality check ----- #
 
   # identify varable ID and other non sample variables to save
-  if (is.null(var.ID)) {
-    SubIDExclude=unique(c(colnames(yList.1y)[1],
-                          sapply(xList, function(f) colnames(f)[1]),
-                          var.ID.additional))
-    Gene_ID_y=yList.1y[,1]
-    Gene_ID_x=lapply(xList, function(f) f[,1])
-    }
-  if (is.null(var.ID)==F) {
-    SubIDExclude=unique(c(var.ID, var.ID.additional))
-    Gene_ID_y=yList.1y[var.ID][,1]
-    Gene_ID_x=lapply(xList, function(f) f[var.ID][,1])
-  }
+  
+  SubIDExclude=unique(c(var.ID, var.ID.additional))
+  Gene_ID_y=yList.1y[var.ID][,1]
+  Gene_ID_x=lapply(xList, function(f) f[var.ID][,1])
+
   # overlapping samples for regression
   ySubID= Reduce(setdiff, SubIDExclude, colnames(yList.1y))
   xSubID=lapply(xList, function(f) Reduce(setdiff, SubIDExclude, colnames(f)))
@@ -144,7 +136,7 @@ iProFun.reg.1y<-function(yList.1y, xList, covariates.1y, permutation=F,
     x=t(do.call(rbind,x_i))
 
     if (is.null(covariates.1y)) {z=NULL} else {
-      z= t(as.matrix(covariates.1y)[, CommonSubID]) }
+      z= t(matrix(as.matrix(covariates.1y)[, CommonSubID], ncol=length(CommonSubID))) }
     xx=as.matrix(cbind(1, x, z))
     zz = as.matrix(cbind(rep(1, nrow(xx)), z))
     p_xx=ncol(xx)
