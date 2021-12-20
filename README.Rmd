@@ -81,12 +81,27 @@ And we pretend there are four predictor data types with a large or small number 
 xList = list(cna[1:300,], cna[301:310,], methy[21:1103,],  methy[1:20,])
 ```
 
-Regression on one outcome data type:
+Regression on one outcome data type: Here we only focused on the first element of ylist (`yList[[1]]`), which is `rna[1:400,]`. Corresponding, the argument for covariates (`covariates.1y`) should be `covariates[[1]]`. 
 ```{r, cache=TRUE}
 ft1=iProFun.reg.1y(yList.1y=yList[[1]], xList=xList, covariates.1y=covariates[[1]],
                     var.ID=c("Gene_ID"),
                     var.ID.additional=c("phospho_ID", "Hybridization", "chr"))
 ```
+
+The result `ft1` is a list, which contains xName (Predictor variable name corresponds to each predictor-outcome pair), yName (Outcome variable name corresponds to each predictor-outcome pair), betas (Coefficient estimate for predictors), betas_se (Coefficent SE for predictors), sigma2 (Regrssion error terms for predictors), dfs (Regression degrees of freedom for predictors), v_g ((X^T X)^-1 projection on predictors). Each of the element contains a sublist, which stores the corresponding results for each of the element in xList.
+
+For example, the following codes extract the result between the outcome y (`yList[[1]]`, which is `rna[1:400,]`) and the 3rd element of xList (which is `methy[21:1103,]`).
+
+```{r, echo = T, results = 'hide'}
+ft1$yName[[3]]
+ft1$xName[[3]]
+ft1$betas[[3]]
+ft1$betas_se[[3]]
+ft1$sigma2[[3]]
+ft1$dfs[[3]]
+ft1$v_g[[3]]
+```
+
 
 Regression on all three outcome data types
 
@@ -95,6 +110,8 @@ reg.all=iProFun.reg(yList=yList, xList=xList, covariates=covariates,
                     var.ID=c("Gene_ID"), var.ID.additional=c("Gene_ID", "phospho_ID",
                     "Hybridization", "chr"))
 ```
+
+The result `reg.all` is a list with length equals to the length of `yList`. The first element `reg.all[[1]]` is essentially the same as `ft1` since both of them store the results between `yList[[1]]` and `xList`. Similarly the second element `reg.all[[2]]` stores the results between `yList[[2]]` and `xList` and so on and so forth.
                     
 Reformat the regression summaries for iProFun
 
@@ -102,28 +119,34 @@ Reformat the regression summaries for iProFun
 summ=multi.omic.reg.summary(reg.out.list=reg.all, var.ID="Gene_ID")
 ```
 
-FWER controlled identification for the data type with few genes
+Now the result `summ` is a list, which contains xName_J (Predictor name corresponds to each predictor-outcome pair across J = 3 outcome data types), yName_J (Outcome name corresponds to each predictor-outcome pair across J = 3 outcome data types), betas_J (Coefficient estimate for predictors across J = 3 outcome data types), betas_se_J (Coefficent SE for predictors across J = 3 outcome data types), sigma2_J (Regrssion error term for predictors across J = 3 outcome data types), dfs_J (Regression degrees of freedom for predictors across J = 3 outcome data types), v_g_J ((X^T X)^-1 projection on predictors across J = 3 outcome data types). Each of the element contains a sublist, which stores the corresponding results for each of the element in xList.
+
+FWER controlled identification for the data type with few genes: Here we only want to calcuate the FWER directly for the second and fourth element in the xList, which is `cna[301:310,]` and `methy[1:20,]`. 
 
 ```{r, cache=TRUE}
 FWER=iProFun.FWER(Reg.Sum=summ, FWER.Index=c(2,4), filter=c(0,0))
 ```
 
-Calculate the posterior probabilities of association patterns via iProFun
+Since we only focused on 2 elements from the xList, the result `FWER` is list with length equals to 2. The first element `FWER[[1]]` contains the p-value, FWER with Bonferroni correction of p-values and Bonferroni correction of p-values among variables that pass biological filtering across data types between `yList` and `cna[301:310,]` The second element `FWER[[2]]` contains the results between `yList` and `methy[1:20,]`.
+
+Calculate the posterior probabilities of association patterns via iProFun: Here don't want to calculate the probabilities of association patterns between the second and fourth element of xList and yList and we set `NoProbXIndex = c(2,4)`.
 ```{r, cache=TRUE}
 prob=iProFun.prob(Reg.Sum=summ, NoProbXIndex=c(2,4), pi1=pi1)
 ```
 
-Summarize posterior probabilities for one outcome of interest
-```{r, cache=TRUE}
-prob1y=iProFun.sum.prob.1y(prob=prob, which.y=1, NoProbXIndex=c(2,4))
-```
+The result `prob` is a list with length 2. The first element stores the results between `xList[[1]]` and `yList`. The second element contains the results between `xList[[3]]` and `yList`.
 
-Fast FDR calculation (may not be accurate)
-```{r, cache=TRUE}
-fastFDR=estFDR(ProbPattern1y1x=prob1y[[1]], grids = seq(0.01, 0.99, by=0.01))
-```
+<!-- Summarize posterior probabilities for one outcome of interest -->
+<!-- ```{r, cache=TRUE} -->
+<!-- prob1y=iProFun.sum.prob.1y(prob=prob, which.y=1, NoProbXIndex=c(2,4)) -->
+<!-- ``` -->
 
-Empirical FDR controlled discoveries for one outcome
+<!-- Fast FDR calculation (may not be accurate) -->
+<!-- ```{r, cache=TRUE} -->
+<!-- fastFDR=estFDR(ProbPattern1y1x=prob1y[[1]], grids = seq(0.01, 0.99, by=0.01)) -->
+<!-- ``` -->
+
+Empirical FDR controlled discoveries for one outcome: Here don't want to calculate the probabilities of association patterns between the second and fourth element of xList and yList and we set `NoProbXIndex = c(2,4)`.
 ```{r, cache=TRUE}
 eFDR1=iProFun.eFDR.1y(reg.all=reg.all, which.y=1, yList=yList, xList=xList,
                       covariates=covariates, pi1=pi1,
@@ -132,6 +155,9 @@ eFDR1=iProFun.eFDR.1y(reg.all=reg.all, which.y=1, yList=yList, xList=xList,
                       grids = seq(0.01, 0.99, by=0.01),fdr = 0.1, PostCut=0.75,
                       var.ID.additional=c( "phospho_ID", "Hybridization", "chr"))
 ```
+
+The result `eFDR1` is a list which contains eFDR.grid (eFDR by the grid of posterior probability cutoffs),  fdr_cutPob (the cutoff values for pre-specified eFDR rate and the posterior probabilities for a pair of data types based on permutation), No.Identified.filter (the number of identified variables for each pair of data types), No.Identified.no.filter (the number of identified variables for each pair of data types) and Gene_fdr (A table summarizing the posterior probabilities (PostProb), the eFDR (eFDR.no.filter), the significance under different criteria (nominal FDR, PostProb cutoffs and filter) for each variable (e.g. gene) under consideration). Each of the element contains a sublist, which stores the corresponding results for each of the element in xList. Here since don't want to calculate the probabilities of association patterns between the second and fourth element of xList, each of the sublist has length of 2.
+
 
 Empirical FDR controlled discoveries for all outcomes
 ```{r, cache=TRUE}
@@ -142,9 +168,11 @@ eFDR=iProFun.eFDR(reg.all=reg.all, yList=yList, xList=xList, covariates=covariat
                   var.ID.additional=c( "phospho_ID", "Hybridization", "chr"), seed=NULL)
 ```
 
+The result `eFDR` is a list with length equals to the length of `yList`. The first element `eFDR[[1]]` is essentially the same as `eFDR1` since both of them store the results between `eFDR[[1]]` and `xList`. Similarly the second element `eFDR[[2]]` stores the results between `yList[[2]]` and `xList` and so on and so forth.
+
 ### Contributions
 
-If you find small bugs, larger issues, or have suggestions, please file them using the [issue tracker](https://github.com/songxiaoyu/iProFun/issues) or email the maintainer at <Jiayi.Ji@mountsinai.org>. Contributions (via pull requests or otherwise) are welcome.
+If you find small bugs, larger issues, or have suggestions, please file them using the [issue tracker](https://github.com/songxiaoyu/iProFun/issues) or email the maintainer at <jj869@sph.rutgers.edu>. Contributions (via pull requests or otherwise) are welcome.
 
 
 
