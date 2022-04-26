@@ -332,14 +332,8 @@ multi.omic.reg.summary<-function(reg.out.list, var.ID) {
 #' @param xType A vector of string for the data types of xList, such as "mutation", "CNV" and "methylation". 
 #' @param yType A vector of string for the data types of xList, such as "RNA", "protein" and "phospho". 
 
-#' @return a 
-#' \item{betas_J:}{Coefficient estimate for predictors across J outcome data types}
-#' \item{betas_se_J:}{Coefficent SE for predictors across J outcome data types}
-#' \item{sigma2_J:}{Regrssion error term for predictors across J outcome data types}
-#' \item{dfs_J:}{Regression degrees of freedom for predictors across J outcome data types}
-#' \item{v_g_J:}{ (X^T X)^{-1} projection on predictors across J outcome data types}
-#' \item{xName_J:}{Predictor name corresponds to each predictor-outcome pair across J outcome data types}
-#' \item{yName_J:}{Outcome name corresponds to each predictor-outcome pair across J outcome data types}
+#' @return A table that includes gene ID, other gene info if provided, predictor data type, outcome data type, 
+#' estimate, se and p-value from Student's t-test, in a long format. 
 
 iProFun.reg.table<-function(reg.all, xType=NULL, yType=NULL, var.ID) {
   reg.sum=multi.omic.reg.summary(reg.out.list=reg.all, var.ID=var.ID)
@@ -403,15 +397,11 @@ iProFun.prob = function(Reg.Sum, NoProbXIndex=NULL, pi1=0.05) {
 
   xlength=length(Reg.Sum$betas_J)
   ylength=ncol(Reg.Sum$betas_J[[1]])
-
   x.prob.index=setdiff(seq(1:xlength), NoProbXIndex)
-
-
 
   if (length(pi1)==1) {
     pi1=matrix(pi1, ncol=ylength, nrow=xlength)
   }
-
 
   Reg_output <- vector("list", xlength);
   x_iProFun <- vector("list", xlength);
@@ -425,7 +415,6 @@ iProFun.prob = function(Reg.Sum, NoProbXIndex=NULL, pi1=0.05) {
                           sigma2_J=Reg.Sum$sigma2_J[[p]],dfs_J=Reg.Sum$dfs_J[[p]],
                           v_g_J = Reg.Sum$v_g_J[[p]], xName_J = Reg.Sum$xName_J[[p]],
                           yName_J = Reg.Sum$yName_J[[p]])
-
     # run iProFun
     x_iProFun[[p]]= iProFun.1x.prob(input=Reg_output[[p]],pi1 = pi1[p,])
 
@@ -438,38 +427,29 @@ iProFun.prob = function(Reg.Sum, NoProbXIndex=NULL, pi1=0.05) {
 }
 
 
-#' Identification with FWER
+#' Calculate FWER 
 #'
-#' This function calculates FWER across all the variables in the same data types, directly
+#' This function calculates FWER across all the variables for the same predictor data type (e.g. mutation), directly
 #' from regression results without considering posterior probabilities of association patterns.
-#' This strategy is preferred for data types (e.g. somatic mutations) that have few variables that cannot reliably infer association patterns.
+#' This strategy is preferred for data types that have few variables that cannot reliably infer association patterns.
 #' @export iProFun.FWER
-#' @param Reg.Sum Linear regression analysis summaries formatted in multi.omic.reg.summary.
+#' @param reg.all Linear regression analysis summaries from iProFun.reg.
 #' @param FWER.Index  Index the predictor data types that calculate FWER directly
-#' @param filter
-#' filter is a vector with the same length of FWER.Index, taking values of 1, -1, 0 or NULL.
-#' "NULL" is default imposes no filtering. 1" indicates that an association is considered for
-#' significance only if its significant associations are positive across all outcome platforms. "-1" indicates
-#' that an association is considered
-#' for significance only if its significant associations are negative  across all outcome platforms. "0" indicates
-#' that an association is considered for significance only if its significant association across all outcome
-#' platforms preserve consistent directions (either positive or negative).
-#' @param cutoff The cutoff value for declaring significance. The cutoff=0.05 in Default.
 #' @return    It returns original p-values and FWER with and without filter
 #' \item{pvalue:}{The p-value of linear regression with Student's t distribution}
-#' \item{FWER.all:}{The FWER with Bonferroni correction for all genes}
-#' \item{FWER.sig.no.filter:}{FWER for genes that pass cutoff}
-#' \item{FWER.sig.filter:}{FWER for genes that pass FWER cutoff and direction filtering.}
+#' \item{FWER:}{The FWER with Bonferroni correction for all genes}
+#' \item{xName:}{The gene name of the predictors}
+
 #' @import stats
 
-iProFun.FWER= function(reg.all, FWER.Index=0,filter=NULL, cutoff=0.05, var.ID) {
+iProFun.FWER= function(reg.all, FWER.Index=0, var.ID) {
   Reg.Sum=multi.omic.reg.summary(reg.out.list=reg.all, var.ID=var.ID)
   # examples: mutation that we only have few genes, and would like to calculate FWER
   # without iProFun posterior prob calculation.
 
   l=length(FWER.Index)
   # add filter
-  x_filter_gene=vector("list", l)
+
   final_result <- vector(mode="list", l)
   
   for (j in 1:l) {
@@ -479,8 +459,6 @@ iProFun.FWER= function(reg.all, FWER.Index=0,filter=NULL, cutoff=0.05, var.ID) {
                           sigma2_J=Reg.Sum$sigma2_J[[k]],dfs_J=Reg.Sum$dfs_J[[k]],
                           v_g_J = Reg.Sum$v_g_J[[k]], xName_J = Reg.Sum$xName_J[[k]],
                           yName_J = Reg.Sum$yName_J[[k]])
-
-
     betas_J=Reg_output$betas_J
 
     t=betas_J/Reg_output$betas_se_J
@@ -488,39 +466,8 @@ iProFun.FWER= function(reg.all, FWER.Index=0,filter=NULL, cutoff=0.05, var.ID) {
       pt(abs(t[g,f]), df=Reg_output$dfs_J[g,f], lower.tail = F)*2 ))
 
     FWER=apply(pvalue, 2, function(f) p.adjust(f, method="bonferroni"))
-    pvalue=data.frame(Reg_output$xName_J,pvalue )
-    FWER.all=data.frame(Reg_output$xName_J,FWER)
-
-    index=which(apply(FWER, 1, function(f) any(f<cutoff)))
-    FWER.sig.no.filter=FWER.all[index, ]
-
-    
-    # filter
-    betas_J_filter=betas_J
-    betas_J_filter[which(FWER>=cutoff)]=NA
-  
-    
-    if (is.null(filter[j]) ){ # no requirement
-      x_filter_gene[[j]]=seq(1, nrow(betas_J))
-    } else {
-      # exclude significant negative 
-      temp1=which(sapply(1:nrow(betas_J), function(f)
-        all(betas_J_filter[f,]>0, na.rm=T)))
-      
-      temp2=which(sapply(1:nrow(betas_J), function(f)
-        all(betas_J_filter[f,]<0, na.rm=T)))    
-
-      if (filter[j] == 1) {x_filter_gene[[j]]= temp1} # all positive beta among significant results
-      if (filter[j] == -1) { x_filter_gene[[j]]=temp2} # all negative beta among significant results
-      if (filter[j] == 0) {x_filter_gene[[j]] = sort( union(temp1, temp2))} # all positive or all negative
-
-    }
-
-
-    index2=sort(intersect(x_filter_gene[[j]], index))
-    FWER.sig.filter=FWER.all[index2, ]
-    result=list(pvalue=pvalue, FWER.all=FWER.all, 
-                FWER.sig.no.filter=FWER.sig.no.filter,FWER.sig.filter=FWER.sig.filter )
+   
+    result=list(pvalue=pvalue, FWER=FWER, xName=Reg_output$xName_J)
     final_result[[j]]= result
   }
   return(final_result)
