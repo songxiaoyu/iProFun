@@ -5,25 +5,28 @@ output: github_document
 
 # `iProFun`
 
-## An *i*ntegrative analysis tool to screen for *Pro*teogenomic *Fun*ctional traits perturbed by DNA-level alterations (e.g. somatic mutation, copy number alterations (CNA) and DNA methylation)
+## An *i*ntegrative analysis tool to screen for *Pro*teogenomic *Fun*ctional traits perturbed by DNA-level alterations (e.g. somatic mutation, copy number variation (CNV) and DNA methylation)
 
 The goal of **iProFun** is to characterize multi-omic functional consequences of DNA-level alterations in tumor. 
 
-iProFun starts with linear regressions that consider multiple -omic outcomes (e.g. mRNA, protein and phosphoprotein) separately, so it allows different genes and samples for different outcomes. This analysis can be performed by `iProFun.reg` function. 
+* iProFun starts with linear regressions that consider multiple -omic outcomes (e.g. mRNA, protein and phosphoprotein) separately, so it allows different genes and samples for different outcomes. This analysis can be performed by `iProFun.reg` function. 
 
-iProFun uses the summary statistics from multiple regressions to jointly detect their associations with DNA-level alternations.
+* iProFun uses the summary statistics from multiple regressions to jointly detect their associations with DNA-level alternations.
 
-* For sparse events like somatic mutations that exist on few genes, we use FWER to detect significant associations using function `iProFun.FWER`.
+For data types with few events (e.g. somatic mutations), `iProFun` provides estimate, standard error, Student's t-test p-value, family-wise error rate (FWER), multi-omic directional filtering, and whether it's identified by iProFun or not.
 
-* For abundant events like CNA and DNA methylation, we calculate the association probabilities using function `iProFun.prob`, perform eFDR controlled test using function `iProFun.eFDR.1y` and filter biologically relevant association directions using function `iProFun.bio`.  We recommend to detect associations that 
+* The `iProFun` identification here is determined by FWER< a cutoff & pass of a directional filtering criterion.
 
-  (1) have association probabilities >=75%, 
-  (2) have eFDR <0.1, and 
-  (3) have the same (positive/negative/both) association directions across platform for significant genes. 
+For data types with many genes, where parallel features of the genes can be learned from each other to boost study power, `iProFun` provides estimate, standard error, Student's t-test p-value, posterior association probability, empirical false discovery rate (eFDR), multi-omic directional filtering, and whether it's identified by iProFun or not.
+
+* The `iProFun`  identification here is determined by  
+ 
+     (1) posterior association probability > a cutoff (e.g. 75%), 
+     (2) eFDR < a cutoff (e.g. 0.1), and 
+     (3) pass of a directional filtering criterion (e.g. no filter, all positive/negative associations across all outcome data types, consistent association directions  across all outcome data types).
 
 
-
-A full description of the method can be found in our [paper](https://www.mcponline.org/content/early/2019/06/21/mcp.RA118.001220).
+A full description of the method can be found in our [paper](https://pubmed.ncbi.nlm.nih.gov/31227599/).
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -44,227 +47,114 @@ devtools::install_github("songxiaoyu/iProFun")
 
 Below is an example of iProFun Integrative analysis pipeline.  
 
-### Data
+### Sample data
 
-The sample data: `cna`, `methy`, `rna`, `protein`, `phospho`, `rna_pc_1_3`, `protein_pc_1_3`, `phospho_pc_1_3`  are included in the package. A full description of the sample dataset can be found in the help page of the data.
+The preprocessed data from National Cancer Institute's Clinical Proteomic Tumor Analysis Consortium Lung Squamous Cell Carcinoma (lscc) study are included in the package, including `cnv`, `mut`, `rna`, `protein`, `phospho` and `cov`. 
+
+* Data reference: 'Satpathy, Shankha, et al. "A proteogenomic portrait of lung squamous cell carcinoma." Cell 184.16 (2021): 4348-4371.
+
+A brief description of the sample dataset can be found in the help page of the data.
 
 ```{r}
 library(iProFun)
-data(all) # load all data
-data(cna) # or load individual data
-?cna
+data(lscc_iProFun_Data) # load all data
+?cnv # help file is available for each individual data
+
 ```
 
-### iProFun Integrative analysis pipeline
-For analysis with overlapping genes, use:
+### iProFun integrative analysis pipeline
+Analysis should specify multi-omic outcome data types, predictor data types, covariates and prior association probability. Here we consider RNA, protein and phosphoprotein as outcomes, and mutation and cnv as predictors, and use the same set of covariates for three outcomes. We use a conservative prior `pi1 = 0.05`. Note, the impact of prior is minimal on the results. 
 ```{r}
-yList = list(rna, protein, phospho); xList = list(cna, methy)
-covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3)
-pi1 = 0.05
+yList = list(rna, protein, phospho); xList = list(mut, cnv)
+covariates = list(cov, cov, cov) # iProFun allows different covariates for different regressions, and here we repeat the same covariates for simplicity
+pi1 = 0.05 # prior association probability. 
 ```
 
-Alternatively, we pretend the outcomes have some genes only available in some data types:
 
- 
-```{r}
-yList = list(rna[1:400,], protein, phospho[100:1590,])
-```
 
-And we pretend there are four predictor data types with a large or small number of genes.
-
-```{r}
-xList = list(cna[1:300,], cna[301:310,], methy[21:1103,],  methy[1:20,])
-```
-
-Regression on one outcome data type: Here we only focused on the first element of ylist (`yList[[1]]`), which is `rna[1:400,]`. Corresponding, the argument for covariates (`covariates.1y`) should be `covariates[[1]]`. 
+Try regression on one outcome data type for checking the implementation
 ```{r, cache=TRUE}
 ft1=iProFun.reg.1y(yList.1y=yList[[1]], xList=xList, covariates.1y=covariates[[1]],
-                    var.ID=c("Gene_ID"),
-                    var.ID.additional=c("phospho_ID", "Hybridization", "chr"))
+                   var.ID=c("geneSymbol"))
 ```
 
-The result `ft1` is a list, which contains xName (Predictor variable name corresponds to each predictor-outcome pair), yName (Outcome variable name corresponds to each predictor-outcome pair), betas (Coefficient estimate for predictors), betas_se (Coefficent SE for predictors), sigma2 (Regrssion error terms for predictors), dfs (Regression degrees of freedom for predictors), v_g ((X^T X)^-1 projection on predictors). Each of the element contains a sublist, which stores the corresponding results for each of the element in xList.
+The result `ft1` is a list, which contains 
 
-For example, the following codes extract the result between the outcome y (`yList[[1]]`, which is `rna[1:400,]`) and the 3rd element of xList (which is `methy[21:1103,]`).
+  * xName (Predictor variable name corresponds to each predictor-outcome pair), 
+  * yName (Outcome variable name corresponds to each predictor-outcome pair), 
+  * betas (Coefficient estimate for predictors), 
+  * betas_se (Coefficent SE for predictors), 
+  * sigma2 (Regrssion error terms for predictors), 
+  * dfs (Regression degrees of freedom for predictors), 
+  * v_g ((X^T X)^-1 projection on predictors). 
+Each of the element contains a sublist, which stores the corresponding results for each of the element in xList.
 
-```{r, echo = T, results = 'hide'}
-ft1$yName[[3]]
-ft1$xName[[3]]
-ft1$betas[[3]]
-ft1$betas_se[[3]]
-ft1$sigma2[[3]]
-ft1$dfs[[3]]
-ft1$v_g[[3]]
-```
-
-
-Regression on all three outcome data types
+For multi-omic iProFun analysis, we need regression on all three outcome data types:
 
 ```{r, cache=TRUE}
 reg.all=iProFun.reg(yList=yList, xList=xList, covariates=covariates,
-                    var.ID=c("Gene_ID"), var.ID.additional=c("Gene_ID", "phospho_ID",
-                    "Hybridization", "chr"))
+                    var.ID=c("geneSymbol"), var.ID.additional=c("id"))
 ```
 
 The result `reg.all` is a list with length equals to the length of `yList`. The first element `reg.all[[1]]` is essentially the same as `ft1` since both of them store the results between `yList[[1]]` and `xList`. Similarly the second element `reg.all[[2]]` stores the results between `yList[[2]]` and `xList` and so on and so forth.
                     
-Reformat the regression summaries for iProFun
+If one is interested to save regression results in a single table, one can use this function to output the result table
 
 ```{r, cache=TRUE}
-summ=multi.omic.reg.summary(reg.out.list=reg.all, var.ID="Gene_ID")
-```
-
-Now the result `summ` is still a list, which contains xName_J (Predictor name corresponds to each predictor-outcome pair across J = 3 outcome data types), yName_J (Outcome name corresponds to each predictor-outcome pair across J = 3 outcome data types), betas_J (Coefficient estimate for predictors across J = 3 outcome data types), betas_se_J (Coefficent SE for predictors across J = 3 outcome data types), sigma2_J (Regrssion error term for predictors across J = 3 outcome data types), dfs_J (Regression degrees of freedom for predictors across J = 3 outcome data types), v_g_J ((X^T X)^-1 projection on predictors across J = 3 outcome data types). Each of the element contains a sublist, which stores the corresponding results for each of the element in xList.
-
-If one is interested to save regression results,
-
-```{r, cache=TRUE}
-summ=multi.omic.reg.summary(reg.out.list=reg.all, var.ID="Gene_ID")
+reg.tab=iProFun.reg.table(reg.all=reg.all, xType = c("mutation", "cnv"), 
+                          yType = c("rna", "protein", "phospho"))
 ```
 
 
-FWER controlled identification for the data type with few genes: Here we only want to calculate the FWER directly for the second and fourth element in the xList, which is `cna[301:310,]` and `methy[1:20,]`. 
+This function calculates FWER. It's preferred to be used for the data type with few genes, such as somatic mutation. Mutation is the first element in the xList, so we use `FWER.Index=c(1)` to calculate FWER for this element. 
 
 ```{r, cache=TRUE}
-FWER=iProFun.FWER(Reg.Sum=summ, FWER.Index=c(2,4), filter=c(0,0))
+FWER.all=iProFun.FWER(reg.all=reg.all, FWER.Index=c(1))
 ```
 
-Since we only focused on 2 elements from the xList, the result `FWER` is list with length equals to 2. The first element `FWER[[1]]` contains the p-value, FWER with Bonferroni correction of p-values and Bonferroni correction of p-values among variables that pass biological filtering across data types between `yList` and `cna[301:310,]` The second element `FWER[[2]]` contains the results between `yList` and `methy[1:20,]`.
 
-Calculate the posterior probabilities of association patterns via iProFun: Here don't want to calculate the probabilities of association patterns between the second and fourth element of xList and yList and we set `NoProbXIndex = c(2,4)`.
+This function calculates posterior association probability and eFDR rate for the predictor data types on one outcome. It's preferred to be used for data types with many genes, such as cnv. As, we don't want to calculate the probabilities of association patterns between the mutation (1st element of xList) and yList and we set `NoProbXIndex = c(1)`.
 ```{r, cache=TRUE}
-prob=iProFun.prob(Reg.Sum=summ, NoProbXIndex=c(2,4), pi1=pi1)
+eFDR1=iProFun.eFDR.1y(reg.all=reg.all, which.y=2, yList=yList, xList=xList,
+                      covariates=covariates, pi1=pi1, NoProbXIndex=c(1),
+                      permutate_number=2, var.ID=c("geneSymbol"),
+                      var.ID.additional=c("id"))
 ```
 
-The result `prob` is a list with length 2. The first element stores the results between `xList[[1]]` and `yList`. The second element contains the results between `xList[[3]]` and `yList`.
-
-<!-- Summarize posterior probabilities for one outcome of interest -->
-<!-- ```{r, cache=TRUE} -->
-<!-- prob1y=iProFun.sum.prob.1y(prob=prob, which.y=1, NoProbXIndex=c(2,4)) -->
-<!-- ``` -->
-
-<!-- Fast FDR calculation (may not be accurate) -->
-<!-- ```{r, cache=TRUE} -->
-<!-- fastFDR=estFDR(ProbPattern1y1x=prob1y[[1]], grids = seq(0.01, 0.99, by=0.01)) -->
-<!-- ``` -->
-
-Empirical FDR controlled discoveries for one outcome: Here don't want to calculate the probabilities of association patterns between the second and fourth element of xList and yList and we set `NoProbXIndex = c(2,4)`.
+This is an expansion of `iProFun.eFDR.1y` to calculate eFDR for all outcomes.
 ```{r, cache=TRUE}
-eFDR1=iProFun.eFDR.1y(reg.all=reg.all, which.y=1, yList=yList, xList=xList,
-                      covariates=covariates, pi1=pi1,
-                      NoProbXIndex=c(2,4), filter=c(1, -1),
-                      permutate_number=2, var.ID=c("Gene_ID"),
-                      grids = seq(0.01, 0.99, by=0.01),fdr = 0.1, PostCut=0.75,
-                      var.ID.additional=c( "phospho_ID", "Hybridization", "chr"))
+
+eFDR.all=iProFun.eFDR(reg.all=reg.all, yList=yList, xList=xList, covariates=covariates, pi1=pi1,
+                  NoProbXIndex=c(1), permutate_number=2, var.ID=c("geneSymbol"),
+                  var.ID.additional=c("id"), seed=123)
 ```
 
-The result `eFDR1` is a list which contains eFDR.grid (eFDR by the grid of posterior probability cutoffs),  fdr_cutPob (the cutoff values for pre-specified eFDR rate and the posterior probabilities for a pair of data types based on permutation), No.Identified.filter (the number of identified variables for each pair of data types), No.Identified.no.filter (the number of identified variables for each pair of data types) and Gene_fdr (A table summarizing the posterior probabilities (PostProb), the eFDR (eFDR.no.filter), the significance under different criteria (nominal FDR, PostProb cutoffs and filter) for each variable (e.g. gene) under consideration). Each of the element contains a sublist, which stores the corresponding results for each of the element in xList. Here since don't want to calculate the probabilities of association patterns between the second and fourth element of xList, each of the sublist has length of 2.
+The result `eFDR` is a list with length equals to the length of `yList`. The first element `eFDR[[1]]` is essentially the same as `eFDR1` since both of them store the results between `eFDR[[1]]` and `xList`. 
 
 
-Empirical FDR controlled discoveries for all outcomes
+This function provides `iProFun` identifications for all predictors and outcomes, based on FWER/eFDR, association probabilities, and biological directional filtering. The output has been reformatted to a long-format table for usage. 
 ```{r, cache=TRUE}
-eFDR=iProFun.eFDR(reg.all=reg.all, yList=yList, xList=xList, covariates=covariates, pi1=pi1,
-                 NoProbXIndex=c(2,4),filter=c(1, -1),
-                 permutate_number=2, var.ID=c("Gene_ID"),
-                 grids = seq(0.01, 0.99, by=0.01),fdr = 0.1, PostCut=0.75,
-                  var.ID.additional=c( "phospho_ID", "Hybridization", "chr"), seed=NULL)
+
+# iProFun identification
+# For data types with many genes, it's based on 
+# (1) association probabilities > 0.75 as specified by `PostPob.cutoff=0.75`,
+# (2) FDR 0.1 as specified by `fdr.cutoff = 0.1`, and 
+# (3) the association direction filtering (CNV requires positive associations as specified by the second element of`filter=c(0, 1)` ).
+# For data types with few genes, it's  based on 
+# (1) FWER 0.1  as specified by `fwer.cutoff=0.1`, and
+# (2)  the association direction filtering (mutation requires consistent association directions as specified by the first element of`filter=c(0, 1)`).
+res=iProFun.detection(reg.all=reg.all, eFDR.all=eFDR.all, FWER.all=FWER.all, filter=c(0, 1),
+                      NoProbButFWERIndex=1,fdr.cutoff = 0.1, fwer.cutoff=0.1, PostPob.cutoff=0.75,
+                      xType=c("mutation", "cnv"), yType=c("rna", "protein", "phospho"))
+
+```
+Output some results
+```{r, cache=TRUE}
+head(res)
 ```
 
-The result `eFDR` is a list with length equals to the length of `yList`. The first element `eFDR[[1]]` is essentially the same as `eFDR1` since both of them store the results between `eFDR[[1]]` and `xList`. Similarly the second element `eFDR[[2]]` stores the results between `yList[[2]]` and `xList` and so on and so forth.
+
 
 ### Contributions
 
 If you find small bugs, larger issues, or have suggestions, please file them using the [issue tracker](https://github.com/songxiaoyu/iProFun/issues) or email the maintainer at <jj869@sph.rutgers.edu>. Contributions (via pull requests or otherwise) are welcome.
-
-
-
-<!-- ## iProFun Integrative analysis pipeline -->
-
-<!-- Below is an example of how iProFun is commonly used.  A full description of the tool can be found in our MCP paper. -->
-<!-- ```{r, include = FALSE} -->
-<!-- require(metRology) -->
-<!-- require(matrixStats) -->
-<!-- ``` -->
-
-<!-- ```{r, messages = FALSE, warning = FALSE,} -->
-<!-- library(iProFun) -->
-<!-- ``` -->
-
-
-<!-- ### Data summary -->
-
-<!-- After preprossing and data cleaning, we have 15121 genes and 569 subjects for mRNA data, 7010 genes and 174 subjects for protein, 5685 genes and 70 subjects for phospho data, 25762 genes and 552 subjects for methylation data, 11859 genes and 560 subjects for mRNA data. The following shows the data structure for each data. -->
-
-<!-- ```{r} -->
-<!-- rna_normal[1:5,1:5] -->
-<!-- ``` -->
-
-<!-- ```{r, include = FALSE} -->
-<!-- # protein_normal[1:5,1:5] -->
-<!-- # phospho_normal[1:5, 1:5] -->
-<!-- # methy[1:5,1:5] -->
-<!-- # cnv[1:5, 1:5] -->
-<!-- ``` -->
-
-
-<!-- ### Gene-level multiple linear regression to obtain summary statistics -->
-
-<!-- We use sets of separate regressions in the integrative analysis pipeline to allow for different samples being measured on different sets of molecular features. -->
-
-<!-- ```{r, eval=FALSE} -->
-<!-- ylist_normal = list(rna_normal, protein_normal, phospho_normal) -->
-<!-- methy_input_1_3 <- -->
-<!-- MultiReg_together( -->
-<!-- ylist = ylist_normal, -->
-<!-- xlist = list(methy, cnv), -->
-<!-- covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3), -->
-<!-- cl = cl -->
-<!-- ) -->
-<!-- ``` -->
-
-<!-- The following shows the results for CNA. -->
-
-<!-- ```{r} -->
-<!-- str(cnv_input_1_3) -->
-<!-- ``` -->
-
-
-<!-- ### Primo – An integrative analysis method for detecting joint associations of DNA al- terations with multi-omics traits -->
-
-<!-- With the summary association statistics obtained from equations (1), we apply an integrative analysis method – Primo – to detect joint associations of DNA variation with multi-omics traits -->
-
-<!-- ```{r, results=FALSE} -->
-<!-- pi1=rep(0.05, 3) -->
-<!-- cnv_1_3 = MultiOmics_Input(cnv_input_1_3, pi1=pi1) -->
-<!-- cnv_1_3_tidy <- MultiOmics_Input(cnv_result , pi1=pi1) -->
-
-<!-- cnv_1_3$colocProb *100 -->
-<!-- cnv_1_3_tidy$colocProb*100 -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- str(cnv_1_3) -->
-<!-- ``` -->
-
-
-<!-- ### False discovery rate assessment -->
-
-<!-- To calculate the empirical FDR, we first calculated the posterior probability of a predictor being associated with an outcome, by summing over all patterns that are consistent with the association of interest. -->
-
-<!-- The following shows the results when we randomly permute the sample label of the mRNA while keeping the labels of the other two traits. -->
-
-<!-- ```{r, eval=FALSE} -->
-<!--  MultiReg_cnv_lr_perm_1 = MultiReg_together_perm( -->
-<!--     ylist = list(rna_regression, protein_regression, phospho_regression), -->
-<!--     xlist = list(cnv_lr_regression, cnv_baf_regression, methy_mean_regression), -->
-<!--     covariates = list(purity_tumor,age, gender), -->
-<!--     xyCommonGeneID = xy_common_geneID, -->
-<!--     conditional_covariate = mutation_reg_111, -->
-<!--     mutation_genes = mutation_gene_111, -->
-<!--     xyCommonSubID = list(xrnaCommonSubID, xproteinCommonSubID, xphosphoCommonSubID), -->
-<!--     filename = "MultiReg_cnv_lr_together_perm_1", -->
-<!--     permcolum = 1, -->
-<!--     seed=(currind-1)*10+i -->
-<!--   ) -->
-<!-- ``` -->
-
