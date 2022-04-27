@@ -1,8 +1,17 @@
+
 #' @description
+#' The goal of iProFun is to characterize multi-omic functional consequences of DNA-level alterations  in tumor.
+#' For data types with few genes, `iProFun` provides estimate, standard error, Student's t-test p-value, family-wise
+#' error rate (FWER), multi-omic directional filtering, and whether it's identified by iProFun or not.
+#' * `iProFun` identification is determined by FWER< a cutoff & pass of a directional filtering criterion.
+#' For data types with many genes, where parallel features of the genes can be learned from each other to boost study power,
+#' `iProFun` provides estimate, standard error, Student's t-test p-value, posterior association probability, empirical false
+#' discovery rate (eFDR), multi-omic directional filtering, and whether it's identified by iProFun or not.
+#' * `iProFun`  identification is determined by  posterior association probability > a cutoff, eFDR < a cutoff & pass of a
+#' directional filtering criterion.
+#' "_PACKAGE"  # This comment makes this file archived.
 #' @useDynLib iProFun
 #' @keywords internal
-#' @import rlang
-#' "_PACKAGE"
 #' @examples
 #' # Load data
 #' data(lscc_iProFun_Data)
@@ -37,4 +46,7 @@
 #'res=iProFun.detection(reg.all=reg.all, eFDR.all=eFDR.all, FWER.all=FWER.all, filter=c(0, 1),
 #'                      NoProbButFWERIndex=1,fdr.cutoff = 0.1, fwer.cutoff=0.1, PostPob.cutoff=0.75,
 #'                      xType=c("mutation", "cnv"), yType=c("rna", "protein", "phospho"))
+#' # output examples
+#' head(res)
+
 
