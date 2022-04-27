@@ -1,8 +1,8 @@
 Package: iProFun
 Title: An integrative analysis tool to screen for Proteogenomic Functional traits perturbed by DNA alterations
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: person("Jiayi", "Ji", email = "Jiayi.Ji@mountsinai.org", role = c("aut", "cre"))
-Description: The goal of iProFun is to 1) characterize functional consequences of DNA alterations by providing the probabilities of different association patterns, 2) identify key genes whose DNA alterations preserve functional consequences on downstream molecules at FDR controlled error rate.
+Description: The goal of iProFun is to characterize multi-omic functional consequences of DNA-level alterations. It provides association probabilities, eFDR/FWER estimates, direction filtering to ensure high quality identifications.
 Depends: R (>= 4.0)
 License: MIT + file LICENSE
 Encoding: UTF-8

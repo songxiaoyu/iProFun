@@ -5,11 +5,11 @@
 \alias{phospho}
 \title{Sample Phospho data}
 \format{
-A data frame with 1591 rows and 70 variables:
+A data frame with 4168 phosphosites and 110 variables:
 \describe{
-  \item{Gene_ID}{Gene name}
-  \item{TCGA-04-1331}{Phospho measurement for TCGA-04-1331}
-  \item{TCGA-04-1332}{Phospho measurement for TCGA-04-1332}
+  \item{geneSymbol}{Gene name}
+  \item{id}{Phospho site identification}
+  \item{C3L.02665}{Phospho measurement for C3L.02665}
   ...
 }
 }
@@ -18,6 +18,6 @@ phospho
 }
 \description{
 A phospho dataset
-methy
+phospho
 }
 \keyword{datasets}

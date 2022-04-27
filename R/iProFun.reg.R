@@ -1,7 +1,7 @@
 
 #' Linear regression on one outcome data type
 #'
-#'  Linear regression on one outcome data type with all data types of DNA alterations.
+#'  Linear regression on one outcome data type with all data types of DNA-level alterations.
 #' @export iProFun.reg.1y
 #' @param yList.1y yList is a list of data matrix for outcomes, and yList.1y is one element of the
 #' list indicating the outcome on one data type.
@@ -35,59 +35,49 @@
 
 #' @examples
 #' # Load data
-#' data(cna, methy, rna, protein, phospho, rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3)
+#' data(lscc_iProFun_Data)
 #' # For analysis with overlapping genes, use:
-#' yList = list(rna, protein, phospho); xList = list(cna, methy)
-#' covariates = list(rna_pc_1_3, protein_pc_1_3, phospho_pc_1_3)
+#' yList = list(rna, protein, phospho); xList = list(mut, cnv)
+#' covariates = list(cov, cov, cov)
 #' pi1 = 0.05
-#' # Alternatively, we pretend the outcomes have some genes only avaiable in some data types:
-#' yList = list(rna[1:400,], protein, phospho[100:1590,])
-#' # And we pretend there are four predictor data types with a large or small number of genes.
-#' xList = list(cna[1:300,], cna[301:310,], methy[21:1103,],  methy[1:20,])
 #' # Regression on one outcome data type
 #' ft1=iProFun.reg.1y(yList.1y=yList[[1]], xList=xList, covariates.1y=covariates[[1]],
-#'                    var.ID=c("Gene_ID"),
-#'                    var.ID.additional=c("phospho_ID", "Hybridization", "chr"))
+#'                    var.ID=c("geneSymbol"))
 #' # Regression on all three outcome data types
 #' reg.all=iProFun.reg(yList=yList, xList=xList, covariates=covariates,
-#'                     var.ID=c("Gene_ID"), var.ID.additional=c("Gene_ID", "phospho_ID",
-#'                     "Hybridization", "chr"))
-#' # Reformat the regression summaries for iProFun
-#' summ=multi.omic.reg.summary(reg.out.list=reg.all, var.ID="Gene_ID")
-#' # FWER controlled identification for the data type with few genes
-#' FWER=iProFun.FWER(Reg.Sum=summ, FWER.Index=c(2,4), filter=c(0,0))
-#' # Calculate the posterior probabilities of association patterns via iProFun
-#' prob=iProFun.prob(Reg.Sum=summ, NoProbXIndex=c(2,4), pi1=pi1)
-#' # Summarize posterior probabilities for one outcome of interest
-#' prob1y=iProFun.sum.prob.1y(prob=prob, which.y=1, NoProbXIndex=c(2,4))
-#' # Fast FDR calculation (may not be accurate)
-#' fastFDR=estFDR(ProbPattern1y1x=prob1y[[1]], grids = seq(0.01, 0.99, by=0.01))
-#' # Empirical FDR controlled discoveries for one outcome
+#'                     var.ID=c("geneSymbol"), var.ID.additional=c("id"))
+#' # Calculate FWER for data type(s) that have few number of genes
+#' FWER=iProFun.FWER(reg.all=reg.all, FWER.Index=c(1), filter=c(0))
+#' # Calculate Empirical FDR for one outcome
 #' eFDR1=iProFun.eFDR.1y(reg.all=reg.all, which.y=2, yList=yList, xList=xList,
-#'                       covariates=covariates, pi1=pi1,
-#'                       NoProbXIndex=c(2,4), filter=c(1, -1),
-#'                       permutate_number=2, var.ID=c("Gene_ID"),
-#'                       grids = seq(0.01, 0.99, by=0.01),fdr = 0.1, PostCut=0.75,
-#'                       var.ID.additional=c( "phospho_ID", "Hybridization", "chr"))
-#' # Empirical FDR controlled discoveries for all outcomes
+#'                       covariates=covariates, pi1=pi1, NoProbXIndex=c(1),
+#'                       permutate_number=2, var.ID=c("geneSymbol"),
+#'                       var.ID.additional=c("id"))
+#' # Calculate Empirical FDR for all outcomes
 #'eFDR=iProFun.eFDR(reg.all=reg.all, yList=yList, xList=xList, covariates=covariates, pi1=pi1,
-#'                  NoProbXIndex=c(2,4),filter=c(1, -1),
+#'                  NoProbXIndex=c(2,4),
 #'                  permutate_number=2, var.ID=c("Gene_ID"),
-#'                  grids = seq(0.01, 0.99, by=0.01),fdr = 0.1, PostCut=0.75,
-#'                   var.ID.additional=c( "phospho_ID", "Hybridization", "chr"), seed=NULL)
+#'                   var.ID.additional=c( "id"), seed=123)
+#' # iProFun identification
+#' # For data types with abundance genes, it's  based (1) association probabilities > 0.75,
+#' # (2) FDR 0.1, or (3) the association direction filtering.
+#' # For data types with few genes, it's  based (1) FWER 0.1
+#' # (2)  the association direction filtering.
 #'
-#'
+#'res=iProFun_detection(reg.all=reg.all, eFDR.all=eFDR.all, FWER.all=FWER.all, filter=c(0, 1),
+#'NoProbButFWERIndex=1,fdr.cutoff = 0.1, fwer.cutoff=0.1, PostPob.cutoff=0.75,
+#'xType=c("mutation", "cnv"), yType=c("rna", "protein", "phospho"))
+
+
+
 iProFun.reg.1y<-function(yList.1y, xList, covariates.1y, permutation=F,
                          var.ID=c("Gene_ID"),
                          var.ID.additional=NULL, seed=NULL){
-  # var.ID.additional=c("phospho_ID", "Hybridization", "chr")
-  # yList.1y=yList[[1]]; xList=xList; covariates.1y=covariates[[1]];
-  # permutation=F; var.ID=c("Gene_ID");
-  # var.ID.additional=c("phospho_ID", "Hybridization", "chr"); seed=NULL
+
   # ----- Data cleaning and quality check ----- #
 
   # identify varable ID and other non sample variables to save
-  
+
   SubIDExclude=unique(c(var.ID, var.ID.additional))
   Gene_ID_y=yList.1y[var.ID][,1]
   Gene_ID_x=lapply(xList, function(f) f[var.ID][,1])
@@ -216,7 +206,7 @@ iProFun.reg.1y<-function(yList.1y, xList, covariates.1y, permutation=F,
 
 
 
-#'  Linear regression on all outcome data types (unformatted)
+#'  Linear regression on all outcome data types
 #'
 #' Linear regression on all outcome data types with all types of DNA alterations (results not formatted for iProFun input)
 #' @export iProFun.reg
@@ -263,9 +253,7 @@ iProFun.reg<-function(yList, xList, covariates, permutation.col=0,
 #' Reformat regression summaries from iProFun.reg as input of iProFun analysis for association probabilities and discoveries
 #' @export multi.omic.reg.summary
 #' @param reg.out.list reg.out.list is the regression summaries from iProFun.reg.
-#' @param var.ID var.ID gives the variable name (e.g. gene/protein name) to match different data types.
-#'
-#' @return list with the same length as xlist. Nested within each list, it contains
+#' @return list with the same length as xList. Nested within each list, it contains
 #' \item{betas_J:}{Coefficient estimate for predictors across J outcome data types}
 #' \item{betas_se_J:}{Coefficent SE for predictors across J outcome data types}
 #' \item{sigma2_J:}{Regrssion error term for predictors across J outcome data types}
@@ -275,7 +263,7 @@ iProFun.reg<-function(yList, xList, covariates, permutation.col=0,
 #' \item{yName_J:}{Outcome name corresponds to each predictor-outcome pair across J outcome data types}
 
 
-multi.omic.reg.summary<-function(reg.out.list, var.ID) {
+multi.omic.reg.summary<-function(reg.out.list) {
 
   ylength=length(reg.out.list)
   xlength=length(reg.out.list[[1]]$betas)
@@ -289,7 +277,7 @@ multi.omic.reg.summary<-function(reg.out.list, var.ID) {
 
     # creat x_variables for a data type that may or may not be analyzed with a y_variable
     x_ID= unique(do.call("rbind", lapply(1:ylength, function(f) reg.out.list[[f]]$xName[[p]])))
-    colnames(x_ID)[1]=var.ID
+    # colnames(x_ID)[1]=var.ID
 
     for (q in 1:ylength) {
       x_ID_q= reg.out.list[[q]]$xName[[p]]
@@ -305,8 +293,8 @@ multi.omic.reg.summary<-function(reg.out.list, var.ID) {
       temp_vg[index]=reg.out.list[[q]]$v_g[[p]]
       temp=as.matrix(reg.out.list[[q]]$yName[[p]])
       if (ncol(temp)>1) {
-        temp_yName=matrix(NA, nrow=nrow(x_ID), ncol=ncol(temp)-1)
-        temp_yName[index,]=matrix(temp[, !colnames(temp)%in%var.ID], nrow=nrow(x_ID_q))
+        temp_yName=matrix(NA, nrow=nrow(x_ID), ncol=ncol(temp))
+        temp_yName[index,]=matrix(temp, nrow=nrow(x_ID_q))
         yName_J[[p]] <- cbind(yName_J[[p]], temp_yName)
       }
 
@@ -318,7 +306,7 @@ multi.omic.reg.summary<-function(reg.out.list, var.ID) {
 
     } # end q
     xName_J[[p]] <- x_ID
-    yName_J[[p]] <- cbind(x_ID[,colnames(x_ID)%in%var.ID], yName_J[[p]])
+    yName_J[[p]] <- t(unique(t(yName_J[[p]])))
   } # end p
 
   return(list(betas_J=betas_J, betas_se_J=betas_se_J, sigma2_J=sigma2_J, dfs_J=dfs_J,
@@ -326,22 +314,22 @@ multi.omic.reg.summary<-function(reg.out.list, var.ID) {
 }
 
 
-#' Reformat the regression output into a table format. Each row is for a predictor-outcome pair. 
+#' Reformat the regression output into a table format. Each row is for a predictor-outcome pair.
 #' @export iProFun.reg.table
-#' @param reg.sum Output from multi.omic.reg.summary.
-#' @param xType A vector of string for the data types of xList, such as "mutation", "CNV" and "methylation". 
-#' @param yType A vector of string for the data types of xList, such as "RNA", "protein" and "phospho". 
+#' @param reg.all Output from iProFun.reg.
+#' @param xType A vector of string for the data types of xList, such as "mutation", "CNV" and "methylation".
+#' @param yType A vector of string for the data types of xList, such as "RNA", "protein" and "phospho".
 
-#' @return A table that includes gene ID, other gene info if provided, predictor data type, outcome data type, 
-#' estimate, se and p-value from Student's t-test, in a long format. 
+#' @return A table that includes gene ID, other gene info if provided, predictor data type, outcome data type,
+#' estimate, se and p-value from Student's t-test, in a long format.
 
-iProFun.reg.table<-function(reg.all, xType=NULL, yType=NULL, var.ID) {
-  reg.sum=multi.omic.reg.summary(reg.out.list=reg.all, var.ID=var.ID)
+iProFun.reg.table<-function(reg.all, xType=NULL, yType=NULL) {
+  reg.sum=multi.omic.reg.summary(reg.out.list=reg.all)
   xlength=length(reg.sum$betas_J)
   ylength=ncol(reg.sum$betas_J[[1]])
   if(is.null(xType)) {xType=1:xlength}
   if(is.null(yType)) {xType=1:ylength}
-  
+
   output=NULL
   for (i in 1:xlength) {
     for (j in 1:ylength) {
@@ -350,132 +338,13 @@ iProFun.reg.table<-function(reg.all, xType=NULL, yType=NULL, var.ID) {
       xName=reg.sum$xName_J[[i]]
       yName=reg.sum$yName_J[[i]]
       df=reg.sum$dfs_J[[i]][,j]
-      pvalue=pt(abs(beta)/beta_se , df=df, lower=F)*2
-      dat=data.frame(xName=xName, yName=yName, xType=xType[i], yType=yType[j], 
+      pvalue=pt(abs(beta)/beta_se , df=df, lower.tail=F)*2
+      dat=data.frame(xName=xName, yName=yName, xType=xType[i], yType=yType[j],
                      est=beta, se=beta_se, pvalue=pvalue)
-      output=output %>% bind_rows(dat)
+      output=output %>% dplyr::bind_rows(dat)
     }
   }
 
   return(output)
 }
-
-
-#' Calculating posterior probabilities of association patterns
-#'
-#' This is the core function of iProFun, and it calculates the posterior probabilities of association patterns from
-#' regression summaries from multiple data types. It allows some data types from regression to opt out from calculating
-#' posterior probabilities, which is suitable for the data types with very few genes (e.g. somatic mutation) that
-#' borrowing information across variables is not reliable.
-#'@export iProFun.prob
-#' @param Reg.Sum Linear regression analysis summaries formatted in multi.omic.reg.summary.
-#' @param NoProbXIndex NoProbXIndex allows users to provide the index for the predictor data type(s) that are not considered
-#' for calculating posterior probabilities of association patterns. NoProbXIndex = NULL (default): all data types in
-#' predictors will be considered. Any 0 < NoProbXIndex <= length of xList:
-#' indicates that the posterior probabilities of association patterns for the corresponding data type(s) are not calculated.
-#' @param pi1 pi1 is the pre-specified prior proportion of non-null statistics. It cane be a number in (0, 1) or a vector
-#' of numbers with length of ylist.
-#'
-#'
-#' @import parallel
-#' @import stats
-#' @import metRology
-#' @import prodlim
-#' @return A list with the same length as xlist. Nested within each list, it contains
-#' \item{NoComputation:}{No of variables considered for this predictor with all outcomes}
-#' \item{Config:}{Corresponding association patterns. Total number 2^J for J outcome data types}
-#' \item{Config.miss:}{Corresponding association patterns for variables (e.g. genes) that are missing in some outcome data type(s)}
-#' \item{PostProb:}{Posterior probability for each predictor on each association pattern}
-#' \item{PostProb.miss:}{Posterior probability for each predictor on each available association pattern  for variables (e.g. genes) that are missing in some outcome data type(s)}
-#' \item{xName.miss:}{Predictor name for variables (e.g. genes) missing in some data type(s)}
-#' \item{colocProb:}{Averaged posterior probability for predictor on each association pattern (missing data excluded)}
-#' \item{Tstat_L:}{T statistics for each predictor on each outcome}
-#' \item{D0:}{Estimated density under the null for predictor on each outcome}
-#' \item{D1:}{Estimated density under the alternative for predictor on each outcome}
-
-iProFun.prob = function(Reg.Sum, NoProbXIndex=NULL, pi1=0.05) {
-
-  xlength=length(Reg.Sum$betas_J)
-  ylength=ncol(Reg.Sum$betas_J[[1]])
-  x.prob.index=setdiff(seq(1:xlength), NoProbXIndex)
-
-  if (length(pi1)==1) {
-    pi1=matrix(pi1, ncol=ylength, nrow=xlength)
-  }
-
-  Reg_output <- vector("list", xlength);
-  x_iProFun <- vector("list", xlength);
-  final_result <- vector(mode="list", xlength)
-
-
-  for (p in x.prob.index) {
-
-    # Summarize Regression
-    Reg_output[[p]]= list(betas_J=Reg.Sum$betas_J[[p]], betas_se_J=Reg.Sum$betas_se_J[[p]],
-                          sigma2_J=Reg.Sum$sigma2_J[[p]],dfs_J=Reg.Sum$dfs_J[[p]],
-                          v_g_J = Reg.Sum$v_g_J[[p]], xName_J = Reg.Sum$xName_J[[p]],
-                          yName_J = Reg.Sum$yName_J[[p]])
-    # run iProFun
-    x_iProFun[[p]]= iProFun.1x.prob(input=Reg_output[[p]],pi1 = pi1[p,])
-
-    # Summarize output
-    names(final_result)[p] <- paste0("iProFun output for xlist ", p)
-    final_result[[p]] <- vector(mode="list", length=9)
-    final_result[[p]] = append(Reg_output[[p]], x_iProFun[[p]])
-  }
-  return(final_result)
-}
-
-
-#' Calculate FWER 
-#'
-#' This function calculates FWER across all the variables for the same predictor data type (e.g. mutation), directly
-#' from regression results without considering posterior probabilities of association patterns.
-#' This strategy is preferred for data types that have few variables that cannot reliably infer association patterns.
-#' @export iProFun.FWER
-#' @param reg.all Linear regression analysis summaries from iProFun.reg.
-#' @param FWER.Index  Index the predictor data types that calculate FWER directly
-#' @return    It returns original p-values and FWER with and without filter
-#' \item{pvalue:}{The p-value of linear regression with Student's t distribution}
-#' \item{FWER:}{The FWER with Bonferroni correction for all genes}
-#' \item{xName:}{The gene name of the predictors}
-
-#' @import stats
-
-iProFun.FWER= function(reg.all, FWER.Index=0, var.ID) {
-  Reg.Sum=multi.omic.reg.summary(reg.out.list=reg.all, var.ID=var.ID)
-  # examples: mutation that we only have few genes, and would like to calculate FWER
-  # without iProFun posterior prob calculation.
-
-  l=length(FWER.Index)
-  # add filter
-
-  final_result <- vector(mode="list", l)
-  
-  for (j in 1:l) {
-    k=FWER.Index[j]
-
-    Reg_output= list(betas_J=Reg.Sum$betas_J[[k]], betas_se_J=Reg.Sum$betas_se_J[[k]],
-                          sigma2_J=Reg.Sum$sigma2_J[[k]],dfs_J=Reg.Sum$dfs_J[[k]],
-                          v_g_J = Reg.Sum$v_g_J[[k]], xName_J = Reg.Sum$xName_J[[k]],
-                          yName_J = Reg.Sum$yName_J[[k]])
-    betas_J=Reg_output$betas_J
-
-    t=betas_J/Reg_output$betas_se_J
-    pvalue=sapply(1:ncol(t), function(f) sapply(1:nrow(t), function(g)
-      pt(abs(t[g,f]), df=Reg_output$dfs_J[g,f], lower.tail = F)*2 ))
-
-    FWER=apply(pvalue, 2, function(f) p.adjust(f, method="bonferroni"))
-   
-    result=list(pvalue=pvalue, FWER=FWER, xName=Reg_output$xName_J)
-    final_result[[j]]= result
-  }
-  return(final_result)
-
-}
-
-
-
-
-
 

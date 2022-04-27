@@ -5,11 +5,11 @@
 \alias{rna}
 \title{Sample mRNA data}
 \format{
-A data frame with 676 rows and 526 variables:
+A data frame with 699 genes and 109 variables:
 \describe{
-  \item{Gene_ID}{Gene name}
-  \item{TCGA-04-1331}{mRNA measurement for TCGA-04-1331}
-  \item{TCGA-04-1332}{mRNA measurement for TCGA-04-1332}
+  \item{geneSymbol}{Gene name}
+  \item{C3L.00081}{mRNA measurement for sample C3L.00081}
+  \item{C3L.00415}{mRNA measurement for sample C3L.00415}
   ...
 }
 }

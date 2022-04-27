@@ -5,11 +5,11 @@
 \alias{protein}
 \title{Sample Protein data}
 \format{
-A data frame with 1103 rows and 528 variables:
+A data frame with 551 genes and 109 variables:
 \describe{
-  \item{Gene_ID}{Gene name}
-  \item{TCGA-04-1331}{Protein measurement for TCGA-04-1331}
-  \item{TCGA-04-1332}{Protein measurement for TCGA-04-1332}
+  \item{geneSymbol}{Gene name}
+  \item{C3L.02665}{Protein measurement for sample C3L.02665}
+  \item{C3L.01663}{Protein measurement for sample C3L.01663}
   ...
 }
 }

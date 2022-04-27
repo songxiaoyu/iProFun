@@ -3,53 +3,53 @@
 #' A mRNA dataset
 #' rna
 #'
-#' @format A data frame with 676 rows and 526 variables:
+#' @format A data frame with 699 genes and 109 variables:
 #' \describe{
-#'   \item{Gene_ID}{Gene name}
-#'   \item{TCGA-04-1331}{mRNA measurement for TCGA-04-1331}
-#'   \item{TCGA-04-1332}{mRNA measurement for TCGA-04-1332}
+#'   \item{geneSymbol}{Gene name}
+#'   \item{C3L.00081}{mRNA measurement for sample C3L.00081}
+#'   \item{C3L.00415}{mRNA measurement for sample C3L.00415}
 #'   ...
 #' }
 "rna"
 
 #' Sample Copy Number Alternation data
 #'
-#' A mRNA dataset
-#' cna
+#' A CNV dataset
+#' cnv
 #'
-#' @format A data frame with 676 rows and 526 variables:
+#' @format A data frame with 709 genes and 109 variables:
 #' \describe{
-#'   \item{Gene_ID}{Gene name}
-#'   \item{TCGA-04-1331}{CNA measurement for TCGA-04-1331}
-#'   \item{TCGA-04-1332}{CNA measurement for TCGA-04-1332}
+#'   \item{geneSymbol}{Gene name}
+#'   \item{C3L.00081}{CNV dosage measurement for sample C3L.00081}
+#'   \item{C3L.00415}{CNV dosage measurement for sample C3L.00415}
 #'   ...
 #' }
-"cna"
+"cnv"
 
-#' Sample Methylation data
+#' Sample Mutation data
 #'
-#' A Methylation dataset
-#' methy
+#' A Mutation dataset
+#' mut
 #'
-#' @format A data frame with 1103 rows and 528 variables:
+#' @format A data frame with 13 genes and 109 variables:
 #' \describe{
-#'   \item{Gene_ID}{Gene name}
-#'   \item{TCGA-04-1331}{Methylation measurement for TCGA-04-1331}
-#'   \item{TCGA-04-1332}{Methylation measurement for TCGA-04-1332}
+#'   \item{geneSymbol}{Gene name}
+#'   \item{C3L.00081}{Mutation (Yes=1; No=0) for sample C3L.00081}
+#'   \item{C3L.00415}{Mutation (Yes=1; No=0) sample C3L.00415}
 #'   ...
 #' }
-"methy"
+"mut"
 
 #' Sample Protein data
 #'
 #' A protein dataset
 #' methy
 #'
-#' @format A data frame with 1103 rows and 528 variables:
+#' @format A data frame with 551 genes and 109 variables:
 #' \describe{
-#'   \item{Gene_ID}{Gene name}
-#'   \item{TCGA-04-1331}{Protein measurement for TCGA-04-1331}
-#'   \item{TCGA-04-1332}{Protein measurement for TCGA-04-1332}
+#'   \item{geneSymbol}{Gene name}
+#'   \item{C3L.02665}{Protein measurement for sample C3L.02665}
+#'   \item{C3L.01663}{Protein measurement for sample C3L.01663}
 #'   ...
 #' }
 "protein"
@@ -57,55 +57,25 @@
 #' Sample Phospho data
 #'
 #' A phospho dataset
-#' methy
+#' phospho
 #'
-#' @format A data frame with 1591 rows and 70 variables:
+#' @format A data frame with 4168 phosphosites and 110 variables:
 #' \describe{
-#'   \item{Gene_ID}{Gene name}
-#'   \item{TCGA-04-1331}{Phospho measurement for TCGA-04-1331}
-#'   \item{TCGA-04-1332}{Phospho measurement for TCGA-04-1332}
+#'   \item{geneSymbol}{Gene name}
+#'   \item{id}{Phospho site identification}
+#'   \item{C3L.02665}{Phospho measurement for C3L.02665}
 #'   ...
 #' }
 "phospho"
 
-#' First 3 principle components for Phospho data
+#' Sample covariate data
 #'
-#' First 3 principle components for Phospho data
-#' phospho_pc_1_3
-#'
-#' @format A data frame with 68 rows and 4 variables:
-#' \describe{
-#'   \item{subject_id}{Subject ID name}
-#'   \item{phospho_pc1}{First principle component for phospho data}
-#'   \item{phospho_pc2}{Second principle component for phospho data}
-#'   \item{phospho_pc3}{Third principle component for phospho data}
-#' }
-"phospho_pc_1_3"
 
-#' First 3 principle components for protein data
+#' cov
 #'
-#' First 3 principle components for protein data
-#' protein_pc_1_3
-#'
-#' @format A data frame with 68 rows and 4 variables:
+#' @format A data frame with 2 rows (covariates: age & female) and 108 variables:
 #' \describe{
-#'   \item{subject_id}{Subject ID name}
-#'   \item{protein_pc1}{First principle component for protein data}
-#'   \item{protein_pc2}{Second principle component for protein data}
-#'   \item{protein_pc3}{Third principle component for protein data}
-#' }
-"protein_pc_1_3"
-
-#' First 3 principle components for rna data
-#'
-#' First 3 principle components for rna data
-#' rna_pc_1_3
-#'
-#' @format A data frame with 68 rows and 4 variables:
-#' \describe{
-#'   \item{subject_id}{Subject ID name}
-#'   \item{rna_pc1}{First principle component for rna data}
-#'   \item{rna_pc2}{Second principle component for rna data}
-#'   \item{rna_pc3}{Third principle component for rna data}
-#' }
-"rna_pc_1_3"
+#'   \item{C3L.00081}{covariate measurements for sample C3L.00081}
+#'   ...
+#'   }
+"cov"
