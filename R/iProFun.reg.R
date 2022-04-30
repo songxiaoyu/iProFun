@@ -9,10 +9,12 @@
 #' @param covariates.1y covariates is a list of data matrix for covariates, and covariates.1y is one
 #' element of the list indicating the covariates for one data type. This list should be NULL or have the
 #' same No. of subjects as ylist.1y.
-#' @param permutation whether to permuate the label of the outcome. permutation = F (default):
-#' no permuatation and it should be used for analysis of original data. permutation = T: permutate the
+#' @param permutation whether to permute the label of the outcome. permutation = F (default):
+#' no permutation and it should be used for analysis of original data. permutation = T: permute the
 #' label of outcome, which is useful in generating eFDR controlled discoveries.
 #' @param var.ID var.ID gives the variable name (e.g. gene/protein name) to match different data types.
+#' @param Y.rescale Y.rescale (default = False) gives whether each outcome variable should be standardized
+#' to mean 0 and sd 1 before regression.
 #' @param var.ID.additional var.ID.additional allows to output additional variable names from the input.
 #' Often helpful if multiple rows (e.g. probes) are considered per gene to allow clear index of the rows.
 #' @param seed seed allows users to externally assign seed to replicate results. Useful when permutation=T.
@@ -71,7 +73,7 @@
 
 
 iProFun.reg.1y<-function(yList.1y, xList, covariates.1y, permutation=F,
-                         var.ID=c("Gene_ID"),
+                         var.ID=c("Gene_ID"), Y.rescale=F,
                          var.ID.additional=NULL, seed=NULL){
 
   # ----- Data cleaning and quality check ----- #
@@ -110,16 +112,13 @@ iProFun.reg.1y<-function(yList.1y, xList, covariates.1y, permutation=F,
 
   for (i in 1:length(xyCommonGeneID)) {
     # print(i)
-    # if (i%%100==1) {print(i)}
-
-    # print(i)
     if (permutation==T){
       y=yList.1y[which(Gene_ID_y==xyCommonGeneID[i]), CommonSubID_permutate]
     } else {
       y=yList.1y[which(Gene_ID_y==xyCommonGeneID[i]), CommonSubID]
     }
     y=t(y)
-
+    if (Y.rescale==T) {y=scale(y)}
     x_i= lapply(1:xlength, function(f) xList[[f]][which(Gene_ID_x[[f]]==xyCommonGeneID[i]), CommonSubID])
     x_index=sapply(x_i, nrow)
     #print(x_index)
@@ -219,6 +218,8 @@ iProFun.reg.1y<-function(yList.1y, xList, covariates.1y, permutation=F,
 #' data matrix.
 #' @param var.ID var.ID gives the variable name (e.g. gene/protein name) to match different data types.
 #' If IDs are not specified, the first columns will be considered as ID variable.
+#' @param Y.rescale Y.rescale (default = False) gives whether each outcome variable should be standardized
+#' to mean 0 and sd 1 before regression.
 #' @param var.ID.additional var.ID.additional  allows to output additional variables from the input.
 #' Often helpful if multiple rows (e.g. probes) are considered per gene to allow clear index of results.
 #' @param seed seed allows users to externally assign seed to replicate results.
@@ -227,7 +228,7 @@ iProFun.reg.1y<-function(yList.1y, xList, covariates.1y, permutation=F,
 #' see output of iProFun.reg.1y for details.}
 
 iProFun.reg<-function(yList, xList, covariates, permutation.col=0,
-                      var.ID=c("Gene_ID"),
+                      var.ID=c("Gene_ID"), Y.rescale=F,
                       var.ID.additional=NULL, seed=NULL) {
   ylength=length(yList)
   perm=rep(F, ylength)
@@ -242,7 +243,7 @@ iProFun.reg<-function(yList, xList, covariates, permutation.col=0,
 
     reg.out.list[[q]]=iProFun.reg.1y(yList.1y=yList[[q]], xList=xList,
                            covariates.1y=covariates[[q]], permutation=perm[q],
-                       var.ID=var.ID, var.ID.additional=var.ID.additional, seed=seed.q)
+                       var.ID=var.ID, Y.rescale=Y.rescale, var.ID.additional=var.ID.additional, seed=seed.q)
   }
   return(reg.out.list)
 }

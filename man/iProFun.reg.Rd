@@ -10,6 +10,7 @@ iProFun.reg(
   covariates,
   permutation.col = 0,
   var.ID = c("Gene_ID"),
+  Y.rescale = F,
   var.ID.additional = NULL,
   seed = NULL
 )
@@ -28,6 +29,9 @@ data matrix.}
 
 \item{var.ID}{var.ID gives the variable name (e.g. gene/protein name) to match different data types.
 If IDs are not specified, the first columns will be considered as ID variable.}
+
+\item{Y.rescale}{Y.rescale (default = False) gives whether each outcome variable should be standardized
+to mean 0 and sd 1 before regression.}
 
 \item{var.ID.additional}{var.ID.additional  allows to output additional variables from the input.
 Often helpful if multiple rows (e.g. probes) are considered per gene to allow clear index of results.}

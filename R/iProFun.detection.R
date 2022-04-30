@@ -59,6 +59,8 @@ iProFun.FWER= function(reg.all, FWER.Index=0) {
 #' of numbers with length of ylist.
 #' @param var.ID var.ID gives the variable name (e.g. gene/protein name) to match different data types.
 #' If IDs are not specified, the first columns will be considered as ID variable.
+#' @param Y.rescale Y.rescale (default = False) gives whether each outcome variable should be standardized
+#' to mean 0 and sd 1 before regression.
 #' @param var.ID.additional var.ID.additional allows to output additional variable names from the input.
 #' Often helpful if multiple rows (e.g. probes) are considered per gene to allow clear index of the rows.
 #' @param permutate_number Number of permutation, default 10
@@ -81,7 +83,7 @@ iProFun.FWER= function(reg.all, FWER.Index=0) {
 
 
 iProFun.eFDR.1y= function(reg.all, which.y, yList, xList, covariates, pi1,
-                          NoProbXIndex=NULL,
+                          NoProbXIndex=NULL, Y.rescale=F,
                           permutate_number=10,
                           var.ID=c("Gene_ID"),
                           var.ID.additional=NULL, seed=NULL) {
@@ -104,7 +106,7 @@ iProFun.eFDR.1y= function(reg.all, which.y, yList, xList, covariates, pi1,
     if (is.null(seed)==F) {seed.p =as.integer((seed+perm)*978)}
 
      ft1=iProFun.reg.1y(yList.1y=yList[[which.y]], xList=xList,
-                        covariates.1y=covariates[[which.y]], permutation=T,
+                        covariates.1y=covariates[[which.y]], permutation=T, Y.rescale=Y.rescale,
                         var.ID=var.ID, var.ID.additional=var.ID.additional, seed=seed.p)
 
     perm.reg.all[[which.y]]=ft1
@@ -146,6 +148,8 @@ iProFun.eFDR.1y= function(reg.all, which.y, yList, xList, covariates, pi1,
 #' of numbers with length of ylist.
 #' @param var.ID var.ID gives the variable name (e.g. gene/protein name) to match different data types.
 #' If IDs are not specified, the first columns will be considered as ID variable.
+#' @param Y.rescale Y.rescale (default = False) gives whether each outcome variable should be standardized
+#' to mean 0 and sd 1 before regression.
 #' @param var.ID.additional var.ID.additional allows to output additional variable names from the input.
 #' Often helpful if multiple rows (e.g. probes) are considered per gene to allow clear index of the rows.
 #' @param permutate_number Number of permutation, default 10
@@ -162,7 +166,7 @@ iProFun.eFDR.1y= function(reg.all, which.y, yList, xList, covariates, pi1,
 iProFun.eFDR= function(reg.all, yList, xList, covariates, pi1,
                        NoProbXIndex=NULL,
                        permutate_number=10,
-                       var.ID=c("Gene_ID"),
+                       var.ID=c("Gene_ID"), Y.rescale=F,
                        var.ID.additional=NULL, seed=NULL) {
 
   ylength=length(yList)
@@ -181,7 +185,7 @@ iProFun.eFDR= function(reg.all, yList, xList, covariates, pi1,
 
     eFDR1=iProFun.eFDR.1y(reg.all=reg.all, which.y=q, yList=yList, xList=xList, covariates=covariates, pi1=pi1,
                           NoProbXIndex=NoProbXIndex, permutate_number=permutate_number,
-                          var.ID=var.ID, var.ID.additional=var.ID.additional, seed=seed.qq)
+                          var.ID=var.ID, Y.rescale=Y.rescale, var.ID.additional=var.ID.additional, seed=seed.qq)
     for (p in 1:xlength2 ) {
       PostProb[[p]]= cbind(PostProb[[p]], eFDR1$PostProb[[p]]);
       Gene_efdr[[p]]= cbind(Gene_efdr[[p]], eFDR1$Gene_efdr[[p]]);

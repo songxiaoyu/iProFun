@@ -10,6 +10,7 @@ iProFun.reg.1y(
   covariates.1y,
   permutation = F,
   var.ID = c("Gene_ID"),
+  Y.rescale = F,
   var.ID.additional = NULL,
   seed = NULL
 )
@@ -24,11 +25,14 @@ list indicating the outcome on one data type.}
 element of the list indicating the covariates for one data type. This list should be NULL or have the
 same No. of subjects as ylist.1y.}
 
-\item{permutation}{whether to permuate the label of the outcome. permutation = F (default):
-no permuatation and it should be used for analysis of original data. permutation = T: permutate the
+\item{permutation}{whether to permute the label of the outcome. permutation = F (default):
+no permutation and it should be used for analysis of original data. permutation = T: permute the
 label of outcome, which is useful in generating eFDR controlled discoveries.}
 
 \item{var.ID}{var.ID gives the variable name (e.g. gene/protein name) to match different data types.}
+
+\item{Y.rescale}{Y.rescale (default = False) gives whether each outcome variable should be standardized
+to mean 0 and sd 1 before regression.}
 
 \item{var.ID.additional}{var.ID.additional allows to output additional variable names from the input.
 Often helpful if multiple rows (e.g. probes) are considered per gene to allow clear index of the rows.}

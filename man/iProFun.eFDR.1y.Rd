@@ -12,6 +12,7 @@ iProFun.eFDR.1y(
   covariates,
   pi1,
   NoProbXIndex = NULL,
+  Y.rescale = F,
   permutate_number = 10,
   var.ID = c("Gene_ID"),
   var.ID.additional = NULL,
@@ -34,6 +35,9 @@ of numbers with length of ylist.}
 
 \item{NoProbXIndex}{NoProbXIndex allows users to provide the index for the predictor data type(s) that are not considered
 for calculating posterior probabilities of association patterns.}
+
+\item{Y.rescale}{Y.rescale (default = False) gives whether each outcome variable should be standardized
+to mean 0 and sd 1 before regression.}
 
 \item{permutate_number}{Number of permutation, default 10}
 
