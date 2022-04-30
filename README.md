@@ -94,7 +94,7 @@ pi1 = 0.05 # prior association probability.
 Try regression on one outcome data type for checking the implementation
 
 ``` r
-ft1=iProFun.reg.1y(yList.1y=yList[[1]], xList=xList, covariates.1y=covariates[[1]], Y.rescale=T,
+ft1=iProFun.reg.1y(yList.1y=yList[[1]], xList=xList, covariates.1y=covariates[[1]], 
                    var.ID=c("geneSymbol"))
 ```
 
@@ -116,7 +116,7 @@ For multi-omic iProFun analysis, we need regression on all three outcome
 data types:
 
 ``` r
-reg.all=iProFun.reg(yList=yList, xList=xList, covariates=covariates, Y.rescale=T,
+reg.all=iProFun.reg(yList=yList, xList=xList, covariates=covariates, 
                     var.ID=c("geneSymbol"), var.ID.additional=c("id"))
 ```
 
@@ -150,9 +150,9 @@ calculate the probabilities of association patterns between the mutation
 (1st element of xList) and yList and we set `NoProbXIndex = c(1)`.
 
 ``` r
-eFDR1=iProFun.eFDR.1y(reg.all=reg.all, which.y=2, yList=yList, xList=xList,
+eFDR1=iProFun.eFDR.1y(reg.all=reg.all, which.y=1, yList=yList, xList=xList,
                       covariates=covariates, pi1=pi1, NoProbXIndex=c(1),
-                      permutate_number=2, var.ID=c("geneSymbol"), Y.rescale=T,
+                      permutate_number=2, var.ID=c("geneSymbol"), 
                       var.ID.additional=c("id"))
 ```
 
@@ -164,7 +164,7 @@ outcomes.
 
 ``` r
 eFDR.all=iProFun.eFDR(reg.all=reg.all, yList=yList, xList=xList, covariates=covariates, pi1=pi1,
-                  NoProbXIndex=c(1), permutate_number=2, var.ID=c("geneSymbol"),
+                  NoProbXIndex=c(1), permutate_number=2, var.ID=c("geneSymbol"), 
                   var.ID.additional=c("id"), seed=123)
 ```
 

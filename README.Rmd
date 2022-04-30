@@ -74,7 +74,7 @@ pi1 = 0.05 # prior association probability.
 
 Try regression on one outcome data type for checking the implementation
 ```{r, cache=TRUE}
-ft1=iProFun.reg.1y(yList.1y=yList[[1]], xList=xList, covariates.1y=covariates[[1]], Y.rescale=T,
+ft1=iProFun.reg.1y(yList.1y=yList[[1]], xList=xList, covariates.1y=covariates[[1]], 
                    var.ID=c("geneSymbol"))
 ```
 
@@ -92,7 +92,7 @@ Each of the element contains a sublist, which stores the corresponding results f
 For multi-omic iProFun analysis, we need regression on all three outcome data types:
 
 ```{r, cache=TRUE}
-reg.all=iProFun.reg(yList=yList, xList=xList, covariates=covariates, Y.rescale=T,
+reg.all=iProFun.reg(yList=yList, xList=xList, covariates=covariates, 
                     var.ID=c("geneSymbol"), var.ID.additional=c("id"))
 ```
 
@@ -117,15 +117,14 @@ This function calculates posterior association probability and eFDR rate for the
 ```{r, cache=TRUE}
 eFDR1=iProFun.eFDR.1y(reg.all=reg.all, which.y=1, yList=yList, xList=xList,
                       covariates=covariates, pi1=pi1, NoProbXIndex=c(1),
-                      permutate_number=2, var.ID=c("geneSymbol"), Y.rescale=T,
+                      permutate_number=2, var.ID=c("geneSymbol"), 
                       var.ID.additional=c("id"))
 ```
 
 This is an expansion of `iProFun.eFDR.1y` to calculate eFDR for all outcomes.
 ```{r, cache=TRUE}
-
 eFDR.all=iProFun.eFDR(reg.all=reg.all, yList=yList, xList=xList, covariates=covariates, pi1=pi1,
-                  NoProbXIndex=c(1), permutate_number=2, var.ID=c("geneSymbol"), Y.rescale=T,
+                  NoProbXIndex=c(1), permutate_number=2, var.ID=c("geneSymbol"), 
                   var.ID.additional=c("id"), seed=123)
 ```
 
