@@ -293,17 +293,17 @@ multi.omic.reg.summary<-function(reg.out.list) {
       temp_dfs[index]=reg.out.list[[q]]$dfs[[p]]
       temp_vg[index]=reg.out.list[[q]]$v_g[[p]]
       temp=as.matrix(reg.out.list[[q]]$yName[[p]])
-      if (ncol(temp)>1) {
-        temp_yName=matrix(NA, nrow=nrow(x_ID), ncol=ncol(temp))
-        temp_yName[index,]=matrix(temp, nrow=nrow(x_ID_q))
-        yName_J[[p]] <- cbind(yName_J[[p]], temp_yName)
-      }
+      temp_yName=matrix(NA, nrow=nrow(x_ID), ncol=ncol(temp))
+      temp_yName[index,]=matrix(temp, nrow=nrow(x_ID_q))
+      
+
 
       betas_J[[p]]=cbind(betas_J[[p]], temp_betas)
       betas_se_J[[p]]=cbind(betas_se_J[[p]], temp_betas_se)
       sigma2_J[[p]]=cbind(sigma2_J[[p]], temp_sigma2)
       dfs_J[[p]]=cbind(dfs_J[[p]], temp_dfs)
       v_g_J[[p]]=cbind(v_g_J[[p]], temp_vg)
+      yName_J[[p]] <- cbind(yName_J[[p]], temp_yName)
 
     } # end q
     xName_J[[p]] <- x_ID

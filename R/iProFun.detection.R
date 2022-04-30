@@ -239,9 +239,10 @@ iProFun.detection=function(reg.all, eFDR.all, FWER.all, filter=c(0, 0), NoProbBu
 
   output=NULL
   # for each x across all y's
-  for (p in x.fwer.idx) {
+  for (p in 1:length(x.fwer.idx)) {
+    k=x.fwer.idx[p]
 
-    betas=betas_filter=reg.sum$betas_J[[p]]
+    betas=betas_filter=reg.sum$betas_J[[k]]
     fwer=FWER.all[[p]]$FWER
     betas_filter[which(fwer>=fwer.cutoff)]=NA
     # all significant ones are positive association
@@ -252,27 +253,27 @@ iProFun.detection=function(reg.all, eFDR.all, FWER.all, filter=c(0, 0), NoProbBu
       all(betas_filter[f,]<0, na.rm=T) & all(is.na(betas_filter[f,]))==F ))
 
     # filter
-    if (is.null(filter[p]) ){ # no requirement
+    if (is.null(filter[k]) ){ # no requirement
       x_filter_gene=seq(1, nrow(betas))
     } else {
-      if (filter[p] == 1) {x_filter_gene= temp1} # all positive beta among significant results
-      if (filter[p] == -1) { x_filter_gene=temp2} # all negative beta among significant results
-      if (filter[p] == 0) {x_filter_gene = sort( union(temp1, temp2))} # all positive or all negative
+      if (filter[k] == 1) {x_filter_gene= temp1} # all positive beta among significant results
+      if (filter[k] == -1) { x_filter_gene=temp2} # all negative beta among significant results
+      if (filter[k] == 0) {x_filter_gene = sort( union(temp1, temp2))} # all positive or all negative
     }
     betas_filter[-x_filter_gene,]=NA
 
     # save output
     for (q in 1:ylength) {
       beta=betas[,q]
-      beta_se=reg.sum$betas_se_J[[p]][,q]
-      xName=reg.sum$xName_J[[p]]
-      yName=reg.sum$yName_J[[p]]
-      df=reg.sum$dfs_J[[p]][,q]
+      beta_se=reg.sum$betas_se_J[[k]][,q]
+      xName=reg.sum$xName_J[[k]]
+      yName=reg.sum$yName_J[[k]]
+      df=reg.sum$dfs_J[[k]][,q]
       pvalue=pt(abs(beta)/beta_se , df=df, lower.tail=F)*2
       d.filter=ifelse(seq(1, nrow(betas)) %in% x_filter_gene, 1, 0)
       iProFun.identification=ifelse(is.na(betas_filter), 0, 1)
 
-      dat=data.frame(xName=xName, yName=yName, xType=xType[p], yType=yType[q],
+      dat=data.frame(xName=xName, yName=yName, xType=xType[k], yType=yType[q],
                      est=beta, se=beta_se, pvalue=pvalue, FWER=fwer[,q],
                      eFDR=NA, PostProb=NA, d.filter=d.filter, iProFun.identification=iProFun.identification[,q])
       output=output %>% dplyr::bind_rows(dat)
