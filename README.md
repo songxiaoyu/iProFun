@@ -19,7 +19,7 @@ consequences of DNA-level alterations in tumor.
 For data types with few events (e.g. somatic mutations), `iProFun`
 provides estimate, standard error, Student’s t-test p-value, family-wise
 error rate (FWER), multi-omic directional filtering, and whether it’s
-identified by iProFun or not.
+identified by iProFun.
 
 -   The `iProFun` identification here is determined by FWER\< a cutoff &
     pass of a directional filtering criterion.
@@ -28,8 +28,8 @@ For data types with many genes, where parallel features of the genes can
 be learned from each other to boost study power, `iProFun` provides
 estimate, standard error, Student’s t-test p-value, posterior
 association probability, empirical false discovery rate (eFDR),
-multi-omic directional filtering, and whether it’s identified by iProFun
-or not.
+multi-omic directional filtering, and whether it’s identified by
+iProFun.
 
 -   The `iProFun` identification here is determined by
 
@@ -94,7 +94,7 @@ pi1 = 0.05 # prior association probability.
 Try regression on one outcome data type for checking the implementation
 
 ``` r
-ft1=iProFun.reg.1y(yList.1y=yList[[1]], xList=xList, covariates.1y=covariates[[1]],
+ft1=iProFun.reg.1y(yList.1y=yList[[1]], xList=xList, covariates.1y=covariates[[1]], Y.rescale=T,
                    var.ID=c("geneSymbol"))
 ```
 
@@ -106,7 +106,7 @@ The result `ft1` is a list, which contains
     pair),
 -   betas (Coefficient estimate for predictors),
 -   betas_se (Coefficent SE for predictors),
--   sigma2 (Regrssion error terms for predictors),
+-   sigma2 (Regression error terms for predictors),
 -   dfs (Regression degrees of freedom for predictors),
 -   v_g ((X^T X)^-1 projection on predictors). Each of the element
     contains a sublist, which stores the corresponding results for each
@@ -116,7 +116,7 @@ For multi-omic iProFun analysis, we need regression on all three outcome
 data types:
 
 ``` r
-reg.all=iProFun.reg(yList=yList, xList=xList, covariates=covariates,
+reg.all=iProFun.reg(yList=yList, xList=xList, covariates=covariates, Y.rescale=T,
                     var.ID=c("geneSymbol"), var.ID.additional=c("id"))
 ```
 
@@ -152,7 +152,7 @@ calculate the probabilities of association patterns between the mutation
 ``` r
 eFDR1=iProFun.eFDR.1y(reg.all=reg.all, which.y=2, yList=yList, xList=xList,
                       covariates=covariates, pi1=pi1, NoProbXIndex=c(1),
-                      permutate_number=2, var.ID=c("geneSymbol"),
+                      permutate_number=2, var.ID=c("geneSymbol"), Y.rescale=T,
                       var.ID.additional=c("id"))
 ```
 
