@@ -7,7 +7,7 @@
 iProFun.detection(
   reg.all,
   eFDR.all,
-  FWER.all,
+  FWER.all = NULL,
   filter = c(0, 0),
   NoProbButFWERIndex = NULL,
   fdr.cutoff = 0.1,
@@ -22,7 +22,7 @@ iProFun.detection(
 
 \item{eFDR.all}{eFDR.all is eFDR results for all outcomes from `iProFun.eFDR`.}
 
-\item{FWER.all}{FWER.all is FWER results for all outceoms from `iProFun.FWER`.}
+\item{FWER.all}{FWER.all is FWER results for all outceoms from `iProFun.FWER`. Can be NULL if FWER analysis was not performed.}
 
 \item{filter}{filter is a vector with the same length of xList, taking values of 1, -1, 0 or NULL.
 "NULL" is default imposes no filtering. 1" indicates that an association is considered for

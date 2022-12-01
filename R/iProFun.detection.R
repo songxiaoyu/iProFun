@@ -202,7 +202,7 @@ iProFun.eFDR= function(reg.all, yList, xList, covariates, pi1,
 #' @export iProFun.detection
 #' @param reg.all reg.all is the regression results for all outcomes from `iProFun.reg`.
 #' @param eFDR.all eFDR.all is eFDR results for all outcomes from `iProFun.eFDR`.
-#' @param FWER.all FWER.all is FWER results for all outceoms from `iProFun.FWER`.
+#' @param FWER.all FWER.all is FWER results for all outceoms from `iProFun.FWER`. Can be NULL if FWER analysis was not performed.
 #' @param NoProbButFWERIndex NoProbXIndex allows users to provide the index for the predictor data type(s) that are not considered
 #' for calculating posterior probabilities of association patterns. Default=NULL. All predictors go throught posterior
 #' probability calculation.
@@ -224,14 +224,16 @@ iProFun.eFDR= function(reg.all, yList, xList, covariates, pi1,
 #' @return A output table that includes gene ID, other gene info if provided, predictor data type, outcome data
 #' type, estimate, se, p-value from Student's t-test, FWER, Posterior Association Probability, eFDR,
 #' directional filtering, and whether it's identified in iProFun or not, in a long format.
-iProFun.detection=function(reg.all, eFDR.all, FWER.all, filter=c(0, 0), NoProbButFWERIndex=NULL,
-                  fdr.cutoff = 0.1, fwer.cutoff=0.1, PostPob.cutoff=0.75,
+iProFun.detection=function(reg.all, eFDR.all, FWER.all=NULL,
+                           filter=c(0, 0), NoProbButFWERIndex=NULL,
+                           fdr.cutoff = 0.1, fwer.cutoff=0.1, PostPob.cutoff=0.75,
                   xType, yType) {
 
   reg.sum=multi.omic.reg.summary(reg.out.list=reg.all)
 
   xlength=length(reg.sum$betas_J)
   ylength=ncol(reg.sum$betas_J[[1]])
+
   x.prob.idx=setdiff(1:xlength, NoProbButFWERIndex)
   x.fwer.idx=NoProbButFWERIndex
   xlength2=length(x.prob.idx)
@@ -239,90 +241,95 @@ iProFun.detection=function(reg.all, eFDR.all, FWER.all, filter=c(0, 0), NoProbBu
 
   output=NULL
   # for each x across all y's
-  for (p in 1:length(x.fwer.idx)) {
-    k=x.fwer.idx[p]
+  if (length(x.fwer.idx)>0) {
+    for (p in 1:length(x.fwer.idx)) {
+      k=x.fwer.idx[p]
 
-    betas=betas_filter=reg.sum$betas_J[[k]]
-    fwer=FWER.all[[p]]$FWER
-    betas_filter[which(fwer>=fwer.cutoff)]=NA
-    # all significant ones are positive association
-    temp1=which(sapply(1:nrow(betas), function(f)
-      all(betas_filter[f,]>0, na.rm=T) & all(is.na(betas_filter[f,]))==F ))
-    # all significant ones are negative association
-    temp2=which(sapply(1:nrow(betas), function(f)
-      all(betas_filter[f,]<0, na.rm=T) & all(is.na(betas_filter[f,]))==F ))
+      betas=betas_filter=reg.sum$betas_J[[k]]
+      fwer=FWER.all[[p]]$FWER
+      betas_filter[which(fwer>=fwer.cutoff)]=NA
+      # all significant ones are positive association
+      temp1=which(sapply(1:nrow(betas), function(f)
+        all(betas_filter[f,]>0, na.rm=T) & all(is.na(betas_filter[f,]))==F ))
+      # all significant ones are negative association
+      temp2=which(sapply(1:nrow(betas), function(f)
+        all(betas_filter[f,]<0, na.rm=T) & all(is.na(betas_filter[f,]))==F ))
 
-    # filter
-    if (is.null(filter[k]) ){ # no requirement
-      x_filter_gene=seq(1, nrow(betas))
-    } else {
-      if (filter[k] == 1) {x_filter_gene= temp1} # all positive beta among significant results
-      if (filter[k] == -1) { x_filter_gene=temp2} # all negative beta among significant results
-      if (filter[k] == 0) {x_filter_gene = sort( union(temp1, temp2))} # all positive or all negative
+      # filter
+      if (is.null(filter[k]) ){ # no requirement
+        x_filter_gene=seq(1, nrow(betas))
+      } else {
+        if (filter[k] == 1) {x_filter_gene= temp1} # all positive beta among significant results
+        if (filter[k] == -1) { x_filter_gene=temp2} # all negative beta among significant results
+        if (filter[k] == 0) {x_filter_gene = sort( union(temp1, temp2))} # all positive or all negative
+      }
+      betas_filter[-x_filter_gene,]=NA
+
+      # save output
+      for (q in 1:ylength) {
+        beta=betas[,q]
+        beta_se=reg.sum$betas_se_J[[k]][,q]
+        xName=reg.sum$xName_J[[k]]
+        yName=reg.sum$yName_J[[k]]
+        df=reg.sum$dfs_J[[k]][,q]
+        pvalue=pt(abs(beta)/beta_se , df=df, lower.tail=F)*2
+        d.filter=ifelse(seq(1, nrow(betas)) %in% x_filter_gene, 1, 0)
+        iProFun.identification=ifelse(is.na(betas_filter), 0, 1)
+
+        dat=data.frame(xName=xName, yName=yName, xType=xType[k], yType=yType[q],
+                       est=beta, se=beta_se, pvalue=pvalue, FWER=fwer[,q],
+                       eFDR=NA, PostProb=NA, d.filter=d.filter, iProFun.identification=iProFun.identification[,q])
+        output=output %>% dplyr::bind_rows(dat)
+      }
+
     }
-    betas_filter[-x_filter_gene,]=NA
-
-    # save output
-    for (q in 1:ylength) {
-      beta=betas[,q]
-      beta_se=reg.sum$betas_se_J[[k]][,q]
-      xName=reg.sum$xName_J[[k]]
-      yName=reg.sum$yName_J[[k]]
-      df=reg.sum$dfs_J[[k]][,q]
-      pvalue=pt(abs(beta)/beta_se , df=df, lower.tail=F)*2
-      d.filter=ifelse(seq(1, nrow(betas)) %in% x_filter_gene, 1, 0)
-      iProFun.identification=ifelse(is.na(betas_filter), 0, 1)
-
-      dat=data.frame(xName=xName, yName=yName, xType=xType[k], yType=yType[q],
-                     est=beta, se=beta_se, pvalue=pvalue, FWER=fwer[,q],
-                     eFDR=NA, PostProb=NA, d.filter=d.filter, iProFun.identification=iProFun.identification[,q])
-      output=output %>% dplyr::bind_rows(dat)
-    }
-
   }
 
-  for (p in 1:xlength2) {
-    k=x.prob.idx[p]
-    betas=betas_filter=reg.sum$betas_J[[k]]
-    eFDR=eFDR.all$Gene_efdr[[p]]
-    PostProb=eFDR.all$PostProb[[p]]
-    betas_filter[which(eFDR>=fdr.cutoff)]=NA
-    betas_filter[which(PostProb<=PostPob.cutoff)]=NA
+  if (length(xlength2)>0) {
+    for (p in 1:xlength2) {
+      k=x.prob.idx[p]
+      betas=betas_filter=reg.sum$betas_J[[k]]
+      eFDR=eFDR.all$Gene_efdr[[p]]
+      PostProb=eFDR.all$PostProb[[p]]
+      betas_filter[which(eFDR>=fdr.cutoff)]=NA
+      betas_filter[which(PostProb<=PostPob.cutoff)]=NA
 
-    # all significant ones are positive association
-    temp1=which(sapply(1:nrow(betas), function(f)
-      all(betas_filter[f,]>0, na.rm=T) & all(is.na(betas_filter[f,]))==F ))
-    # all significant ones are negative association
-    temp2=which(sapply(1:nrow(betas), function(f)
-      all(betas_filter[f,]<0, na.rm=T) & all(is.na(betas_filter[f,]))==F ))
-    # filter
-    if (is.null(filter[k]) ){ # no requirement
-      x_filter_gene=seq(1, nrow(betas))
-    } else {
-      if (filter[k] == 1) {x_filter_gene= temp1} # all positive beta among significant results
-      if (filter[k] == -1) { x_filter_gene=temp2} # all negative beta among significant results
-      if (filter[k] == 0) {x_filter_gene = sort( union(temp1, temp2))} # all positive or all negative
+      # all significant ones are positive association
+      temp1=which(sapply(1:nrow(betas), function(f)
+        all(betas_filter[f,]>0, na.rm=T) & all(is.na(betas_filter[f,]))==F ))
+      # all significant ones are negative association
+      temp2=which(sapply(1:nrow(betas), function(f)
+        all(betas_filter[f,]<0, na.rm=T) & all(is.na(betas_filter[f,]))==F ))
+      # filter
+      if (is.null(filter[k]) ){ # no requirement
+        x_filter_gene=seq(1, nrow(betas))
+      } else {
+        if (filter[k] == 1) {x_filter_gene= temp1} # all positive beta among significant results
+        if (filter[k] == -1) { x_filter_gene=temp2} # all negative beta among significant results
+        if (filter[k] == 0) {x_filter_gene = sort( union(temp1, temp2))} # all positive or all negative
+      }
+      betas_filter[-x_filter_gene,]=NA
+      # save output
+      for (q in 1:ylength) {
+        beta=betas[,q]
+        beta_se=reg.sum$betas_se_J[[k]][,q]
+        xName=reg.sum$xName_J[[k]]
+        yName=reg.sum$yName_J[[k]]
+        df=reg.sum$dfs_J[[k]][,q]
+        pvalue=pt(abs(beta)/beta_se , df=df, lower.tail=F)*2
+        d.filter=ifelse(seq(1, nrow(betas)) %in% x_filter_gene, 1, 0)
+        iProFun.identification=ifelse(is.na(betas_filter), 0, 1)
+
+        dat=data.frame(xName=xName, yName=yName, xType=xType[k], yType=yType[q],
+                       est=beta, se=beta_se, pvalue=pvalue, FWER=NA,
+                       eFDR=eFDR[,q], PostProb=PostProb[,q], d.filter=d.filter, iProFun.identification=iProFun.identification[,q])
+        output=output %>% dplyr::bind_rows(dat)
+      }
+
+
     }
-    betas_filter[-x_filter_gene,]=NA
-    # save output
-    for (q in 1:ylength) {
-      beta=betas[,q]
-      beta_se=reg.sum$betas_se_J[[k]][,q]
-      xName=reg.sum$xName_J[[k]]
-      yName=reg.sum$yName_J[[k]]
-      df=reg.sum$dfs_J[[k]][,q]
-      pvalue=pt(abs(beta)/beta_se , df=df, lower.tail=F)*2
-      d.filter=ifelse(seq(1, nrow(betas)) %in% x_filter_gene, 1, 0)
-      iProFun.identification=ifelse(is.na(betas_filter), 0, 1)
-
-      dat=data.frame(xName=xName, yName=yName, xType=xType[k], yType=yType[q],
-                     est=beta, se=beta_se, pvalue=pvalue, FWER=NA,
-                     eFDR=eFDR[,q], PostProb=PostProb[,q], d.filter=d.filter, iProFun.identification=iProFun.identification[,q])
-      output=output %>% dplyr::bind_rows(dat)
-    }
-
-
   }
+
 
   output.narm=output[-which(is.na(output$est)),]
   return(output.narm)
